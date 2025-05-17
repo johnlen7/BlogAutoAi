@@ -246,7 +246,7 @@ class AIService:
         )
         
         if model_type == AIModel.CLAUDE:
-            return self._query_claude(prompt, max_tokens=5000)
+            return self._query_claude(prompt, max_tokens=4000)  # Maximum for Claude 3 Opus is 4096
         else:
             return self._query_gpt(prompt, max_tokens=5000)
     
@@ -324,7 +324,7 @@ class AIService:
         )
         
         if model_type == AIModel.CLAUDE:
-            return self._query_claude(prompt, max_tokens=5000)
+            return self._query_claude(prompt, max_tokens=4000)  # Maximum for Claude 3 Opus is 4096
         else:
             return self._query_gpt(prompt, max_tokens=5000)
     
@@ -333,6 +333,11 @@ class AIService:
         if not self.anthropic_client:
             raise ValueError("Anthropic API key not configured")
         
+        # Ensure max_tokens is within model limits (Claude 3 Opus max is 4096)
+        if max_tokens > 4000:
+            logger.warning(f"Requested {max_tokens} tokens exceeds Claude safe limit, reducing to 4000")
+            max_tokens = 4000
+            
         try:
             # Use a fallback to a more stable Claude model if needed
             try:
@@ -347,9 +352,13 @@ class AIService:
             except Exception as model_error:
                 # Try with fallback model as last resort
                 logger.warning(f"Error with primary Claude model, trying fallback: {str(model_error)}")
+                
+                # Fallback model might have different token limits
+                fallback_max_tokens = min(max_tokens, 4000)
+                
                 response = self.anthropic_client.messages.create(
                     model="claude-3-sonnet-20240229",  # Fallback to a more standard model
-                    max_tokens=max_tokens,
+                    max_tokens=fallback_max_tokens,
                     messages=[
                         {"role": "user", "content": prompt}
                     ]
