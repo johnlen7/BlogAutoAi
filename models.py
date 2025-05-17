@@ -91,8 +91,8 @@ class Article(db.Model):
     ai_model = db.Column(db.Enum(AIModel))
     keyword = db.Column(db.String(128))
     source_url = db.Column(db.String(512))
-    # Usando uma string simples para evitar problemas de inicialização
-    content_source_name = db.Column(db.String(20), default="keyword")
+    # Campo para indicar qual a fonte do conteúdo (keyword, url, rss)
+    source_type = db.Column(db.String(20), default="keyword")
     repeat_schedule = db.Column(db.Enum(RepeatSchedule), default=RepeatSchedule.NONE)
     scheduled_date = db.Column(db.DateTime)
     publish_attempt_count = db.Column(db.Integer, default=0)
