@@ -15,6 +15,12 @@ class User(UserMixin, db.Model):
     api_keys = db.relationship('APIKey', backref='user', lazy=True)
     articles = db.relationship('Article', backref='author', lazy=True)
     
+    # Novos relacionamentos para automação
+    automation_themes = db.relationship('AutomationTheme', backref='user', lazy=True)
+    rss_feeds = db.relationship('RSSFeed', backref='user', lazy=True)
+    news_items = db.relationship('NewsItem', backref='user', lazy=True)
+    automation_settings = db.relationship('AutomationSettings', backref='user', lazy=True)
+    
     def __repr__(self):
         return f'<User {self.username}>'
 
@@ -85,6 +91,7 @@ class Article(db.Model):
     ai_model = db.Column(db.Enum(AIModel))
     keyword = db.Column(db.String(128))
     source_url = db.Column(db.String(512))
+    # Movendo o Enum ContentSource para depois da definição da classe Article
     
     repeat_schedule = db.Column(db.Enum(RepeatSchedule), default=RepeatSchedule.NONE)
     scheduled_date = db.Column(db.DateTime)
@@ -92,11 +99,16 @@ class Article(db.Model):
     last_attempt_date = db.Column(db.DateTime)
     wordpress_post_id = db.Column(db.Integer)
     
+    is_automated = db.Column(db.Boolean, default=False)  # Flag para artigos gerados automaticamente
+    word_count = db.Column(db.Integer)  # Contagem de palavras do artigo
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     wordpress_config_id = db.Column(db.Integer, db.ForeignKey('word_press_config.id'))
+    theme_id = db.Column(db.Integer, db.ForeignKey('automation_theme.id'), nullable=True)
+    news_item_id = db.Column(db.Integer, db.ForeignKey('news_item.id'), nullable=True)
     
     # Relationship to the WordPress config
     wordpress_config = db.relationship('WordPressConfig')
@@ -135,3 +147,93 @@ class SchedulerLog(db.Model):
     
     def __repr__(self):
         return f'<SchedulerLog {self.log_type.value}: {self.message[:30]}>'
+
+
+class ContentSource(enum.Enum):
+    KEYWORD = "keyword"
+    RSS = "rss"
+    URL = "url"
+
+
+class AutomationTheme(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    keywords = db.Column(db.Text, nullable=False)  # Armazena palavras-chave separadas por vírgula
+    priority = db.Column(db.Integer, default=0)  # Quanto maior, maior a prioridade
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relacionamentos
+    rss_feeds = db.relationship('RSSFeed', backref='theme', lazy=True)
+    articles = db.relationship('Article', backref='theme', lazy=True)
+    
+    def __repr__(self):
+        return f'<AutomationTheme {self.name}>'
+
+
+class RSSFeed(db.Model):
+    __tablename__ = 'rss_feed'  # Define explicitamente o nome da tabela
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    url = db.Column(db.String(512), nullable=False)
+    last_fetch = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    theme_id = db.Column(db.Integer, db.ForeignKey('automation_theme.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relacionamentos
+    news_items = db.relationship('NewsItem', backref='rss_feed', lazy=True)
+    
+    def __repr__(self):
+        return f'<RSSFeed {self.name}>'
+
+
+class NewsItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(256), nullable=False)
+    description = db.Column(db.Text)
+    content = db.Column(db.Text)
+    link = db.Column(db.String(512), nullable=False)
+    guid = db.Column(db.String(512), nullable=False, unique=True)
+    published_date = db.Column(db.DateTime)
+    is_processed = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    rss_feed_id = db.Column(db.Integer, db.ForeignKey('rss_feed.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relacionamento com artigos gerados a partir desta notícia
+    articles = db.relationship('Article', backref='news_source', lazy=True)
+    
+    def __repr__(self):
+        return f'<NewsItem {self.title}>'
+
+
+class AutomationSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    post_interval_hours = db.Column(db.Integer, default=6)  # Intervalo em horas entre postagens
+    min_word_count = db.Column(db.Integer, default=700)
+    max_word_count = db.Column(db.Integer, default=1500)
+    timezone_offset = db.Column(db.Integer, default=-3)  # Padrão: UTC-3 (Brasília)
+    active_hours_start = db.Column(db.Integer, default=8)  # Horário de início (ex: 8 = 8h da manhã)
+    active_hours_end = db.Column(db.Integer, default=22)  # Horário de término (ex: 22 = 22h/10h da noite)
+    is_active = db.Column(db.Boolean, default=True)
+    next_scheduled_run = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    wordpress_config_id = db.Column(db.Integer, db.ForeignKey('word_press_config.id'))
+    
+    # Relação com a configuração WordPress
+    wordpress_config = db.relationship('WordPressConfig')
+    
+    def __repr__(self):
+        return f'<AutomationSettings user_id={self.user_id}>'
