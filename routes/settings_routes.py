@@ -406,7 +406,7 @@ def test_api_key():
             models = client.models.list()
             return jsonify({
                 'success': True,
-                'message': 'Claude API key is valid and working! You can now use Claude 3.5 Haiku for content generation.'
+                'message': 'Claude API key is valid and working! You can now use Claude 3 Opus for content generation.'
             })
         except anthropic.AuthenticationError:
             return jsonify({

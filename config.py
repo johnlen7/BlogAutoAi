@@ -17,7 +17,7 @@ class Config:
     }
     
     # API defaults
-    DEFAULT_CLAUDE_MODEL = "claude-3-5-haiku-20240307"  # Using Claude 3.5 Haiku as requested
+    DEFAULT_CLAUDE_MODEL = "claude-3-opus-20240229"  # Using Claude 3 Opus (versão disponível na API)
     DEFAULT_GPT_MODEL = "gpt-4o-mini"  # Using GPT-4o-mini as requested
     
     # Unsplash API
