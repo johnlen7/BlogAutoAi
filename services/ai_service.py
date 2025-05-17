@@ -334,14 +334,27 @@ class AIService:
             raise ValueError("Anthropic API key not configured")
         
         try:
-            response = self.anthropic_client.messages.create(
-                model=Config.DEFAULT_CLAUDE_MODEL,
-                max_tokens=max_tokens,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            return response.content[0].text
+            # Use a fallback to a more stable Claude model if needed
+            try:
+                response = self.anthropic_client.messages.create(
+                    model=Config.DEFAULT_CLAUDE_MODEL,
+                    max_tokens=max_tokens,
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                return response.content[0].text
+            except Exception as model_error:
+                # Try with fallback model as last resort
+                logger.warning(f"Error with primary Claude model, trying fallback: {str(model_error)}")
+                response = self.anthropic_client.messages.create(
+                    model="claude-3-sonnet-20240229",  # Fallback to a more standard model
+                    max_tokens=max_tokens,
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                return response.content[0].text
         except Exception as e:
             logger.error(f"Error querying Claude API: {str(e)}")
             raise
