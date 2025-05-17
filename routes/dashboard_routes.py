@@ -17,12 +17,12 @@ def index():
     """Dashboard home page with article statistics and status"""
     # Get article counts by status
     article_stats = db.session.query(
-        ArticleStatus,
+        Article.status,
         func.count(Article.id)
     ).filter(
         Article.user_id == current_user.id
     ).group_by(
-        ArticleStatus
+        Article.status
     ).all()
     
     # Format statistics for template
@@ -162,12 +162,12 @@ def api_dashboard_stats():
     """API endpoint to get dashboard statistics (for AJAX updates)"""
     # Get article counts by status
     article_stats = db.session.query(
-        ArticleStatus,
+        Article.status,
         func.count(Article.id)
     ).filter(
         Article.user_id == current_user.id
     ).group_by(
-        ArticleStatus
+        Article.status
     ).all()
     
     # Format statistics for response
