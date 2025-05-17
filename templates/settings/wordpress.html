@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}WordPress Settings - BlogAuto AI{% endblock %}
+
+{% block page_title %}WordPress Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="settings-menu mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <nav>
+                        <ul class="nav nav-pills nav-fill">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('settings.index') }}">
+                                    <i class="fas fa-cog me-2"></i> Overview
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="{{ url_for('settings.wordpress_config') }}">
+                                    <i class="fab fa-wordpress me-2"></i> WordPress
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('settings.api_keys') }}">
+                                    <i class="fas fa-key me-2"></i> API Keys
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">WordPress Sites</h5>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWordPressModal">
+                            <i class="fas fa-plus-circle me-1"></i> Add WordPress Site
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if configs %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Site URL</th>
+                                            <th>Username</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for config in configs %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="me-3">
+                                                            <i class="fab fa-wordpress fa-2x text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="mb-0">{{ config.name }}</h6>
+                                                            {% if config.is_default %}
+                                                                <span class="badge bg-success">Default</span>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <a href="{{ config.site_url }}" target="_blank" class="text-decoration-none">
+                                                        {{ config.site_url }} <i class="fas fa-external-link-alt ms-1 small"></i>
+                                                    </a>
+                                                </td>
+                                                <td>{{ config.username }}</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary test-wordpress" data-config-id="{{ config.id }}">
+                                                        <i class="fas fa-check-circle me-1"></i> Test Connection
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary edit-wordpress-config" 
+                                                                data-config-id="{{ config.id }}"
+                                                                data-name="{{ config.name }}"
+                                                                data-site-url="{{ config.site_url }}"
+                                                                data-username="{{ config.username }}"
+                                                                data-is-default="{{ config.is_default }}">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger delete-wordpress-config" 
+                                                                data-config-id="{{ config.id }}"
+                                                                data-name="{{ config.name }}">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fab fa-wordpress text-muted mb-3" style="font-size: 3rem;"></i>
+                                <h5>No WordPress sites configured</h5>
+                                <p class="text-muted mb-3">Add your WordPress site to start publishing content</p>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWordPressModal">
+                                    <i class="fas fa-plus-circle me-1"></i> Add WordPress Site
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">WordPress Integration Help</h5>
+            </div>
+            <div class="card-body">
+                <h6>How to create an Application Password in WordPress</h6>
+                <ol>
+                    <li>Log in to your WordPress admin dashboard.</li>
+                    <li>Go to <strong>Users → Profile</strong> page.</li>
+                    <li>Scroll down to the <strong>Application Passwords</strong> section.</li>
+                    <li>Enter a name for your application password (e.g., "BlogAuto AI").</li>
+                    <li>Click <strong>Add New Application Password</strong>.</li>
+                    <li>Copy the generated password - you won't be able to see it again!</li>
+                    <li>Use this password along with your username in BlogAuto AI settings.</li>
+                </ol>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> If you don't see the Application Passwords section, you may need to enable it or update to a newer WordPress version.
+                </div>
+                
+                <h6 class="mt-4">WordPress REST API Requirements</h6>
+                <ul>
+                    <li>WordPress 4.7 or later (5.6+ recommended)</li>
+                    <li>REST API must be enabled</li>
+                    <li>Application Passwords feature must be available</li>
+                    <li>Your site must be accessible from the internet (or this application)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add WordPress Modal -->
+<div class="modal fade" id="addWordPressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add WordPress Site</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{{ url_for('settings.wordpress_config') }}" id="addWordPressForm">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Configuration Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="My Blog">
+                        <div class="form-text">A name to identify this WordPress site</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="site_url" class="form-label">WordPress Site URL</label>
+                        <input type="url" class="form-control" id="site_url" name="site_url" required placeholder="https://myblog.com">
+                        <div class="form-text">The full URL to your WordPress site</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">WordPress Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="admin">
+                        <div class="form-text">Your WordPress admin username</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="app_password" class="form-label">Application Password</label>
+                        <input type="password" class="form-control" id="app_password" name="app_password" required>
+                        <div class="form-text">The application password generated in WordPress admin</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_default" name="is_default">
+                        <label class="form-check-label" for="is_default">Set as Default WordPress Site</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-primary test-wordpress">
+                    <i class="fas fa-check-circle me-1"></i> Test Connection
+                </button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="addWordPressForm" class="btn btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit WordPress Modal -->
+<div class="modal fade" id="editWordPressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit WordPress Site</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{{ url_for('settings.wordpress_config') }}" id="editWordPressForm">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="config_id" value="">
+                    
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Configuration Name</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_site_url" class="form-label">WordPress Site URL</label>
+                        <input type="url" class="form-control" id="edit_site_url" name="site_url" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_username" class="form-label">WordPress Username</label>
+                        <input type="text" class="form-control" id="edit_username" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_app_password" class="form-label">Application Password</label>
+                        <input type="password" class="form-control" id="edit_app_password" name="app_password" placeholder="Leave empty to keep current password">
+                        <div class="form-text">Only fill this if you want to change the password</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit_is_default" name="is_default">
+                        <label class="form-check-label" for="edit_is_default">Set as Default WordPress Site</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-primary test-wordpress" data-config-id="">
+                    <i class="fas fa-check-circle me-1"></i> Test Connection
+                </button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="editWordPressForm" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}

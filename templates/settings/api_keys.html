@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}API Keys - BlogAuto AI{% endblock %}
+
+{% block page_title %}API Keys{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="settings-menu mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <nav>
+                        <ul class="nav nav-pills nav-fill">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('settings.index') }}">
+                                    <i class="fas fa-cog me-2"></i> Overview
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('settings.wordpress_config') }}">
+                                    <i class="fab fa-wordpress me-2"></i> WordPress
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="{{ url_for('settings.api_keys') }}">
+                                    <i class="fas fa-key me-2"></i> API Keys
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GPT API Key -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt="OpenAI" width="24" height="24" class="me-2">
+                    <h5 class="mb-0">OpenAI API Key</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('settings.api_keys') }}" id="gptApiForm">
+                    <input type="hidden" name="api_type" value="gpt">
+                    
+                    <div class="mb-3">
+                        <label for="gpt_key" class="form-label">OpenAI API Key</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="gpt_key" name="api_key" placeholder="sk-..." value="{{ gpt_key.key if gpt_key else '' }}">
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="gpt_key">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">API key from <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a></div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-primary test-api-key" data-api-type="gpt">
+                            <i class="fas fa-check-circle me-1"></i> Test Key
+                        </button>
+                        <div>
+                            {% if gpt_key %}
+                                <button type="button" class="btn btn-outline-danger delete-api-key" data-api-type="gpt">
+                                    <i class="fas fa-trash me-1"></i> Delete Key
+                                </button>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Key
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-light">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <span class="badge bg-success">GPT-4o</span>
+                    </div>
+                    <div>
+                        <small class="text-muted">Latest supported model: gpt-4o (released May 13, 2024)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Claude API Key -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Anthropic_logo.svg" alt="Anthropic" width="24" height="24" class="me-2">
+                    <h5 class="mb-0">Anthropic Claude API Key</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('settings.api_keys') }}" id="claudeApiForm">
+                    <input type="hidden" name="api_type" value="claude">
+                    
+                    <div class="mb-3">
+                        <label for="claude_key" class="form-label">Claude API Key</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="claude_key" name="api_key" placeholder="sk-ant-..." value="{{ claude_key.key if claude_key else '' }}">
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="claude_key">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">API key from <a href="https://console.anthropic.com/keys" target="_blank">console.anthropic.com/keys</a></div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-primary test-api-key" data-api-type="claude">
+                            <i class="fas fa-check-circle me-1"></i> Test Key
+                        </button>
+                        <div>
+                            {% if claude_key %}
+                                <button type="button" class="btn btn-outline-danger delete-api-key" data-api-type="claude">
+                                    <i class="fas fa-trash me-1"></i> Delete Key
+                                </button>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Key
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-light">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <span class="badge bg-success">Claude 3.5 Sonnet</span>
+                    </div>
+                    <div>
+                        <small class="text-muted">Latest supported model: claude-3-5-sonnet-20241022 (released October 22, 2024)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Unsplash API Key -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 32 32" class="me-2">
+                        <path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"/>
+                    </svg>
+                    <h5 class="mb-0">Unsplash API Key (Optional)</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('settings.api_keys') }}" id="unsplashApiForm">
+                    <input type="hidden" name="api_type" value="unsplash">
+                    
+                    <div class="mb-3">
+                        <label for="unsplash_key" class="form-label">Unsplash Access Key</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="unsplash_key" name="api_key" placeholder="Access Key" value="{{ unsplash_key.key if unsplash_key else '' }}">
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="unsplash_key">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Access key from <a href="https://unsplash.com/developers" target="_blank">unsplash.com/developers</a></div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-primary test-api-key" data-api-type="unsplash">
+                            <i class="fas fa-check-circle me-1"></i> Test Key
+                        </button>
+                        <div>
+                            {% if unsplash_key %}
+                                <button type="button" class="btn btn-outline-danger delete-api-key" data-api-type="unsplash">
+                                    <i class="fas fa-trash me-1"></i> Delete Key
+                                </button>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Key
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-light">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    The Unsplash API key is optional but recommended for getting high-quality featured images for your articles
+                </small>
+            </div>
+        </div>
+        
+        <!-- API Keys Information -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">API Information</h5>
+            </div>
+            <div class="card-body">
+                <h6>About the APIs</h6>
+                <p>BlogAuto AI uses the following APIs to generate and enhance your content:</p>
+                
+                <div class="mb-3">
+                    <h6>OpenAI GPT</h6>
+                    <p>GPT-4o is used for content generation, headline creation, meta descriptions, and more. You'll need an API key from <a href="https://platform.openai.com/" target="_blank">OpenAI</a>.</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Anthropic Claude</h6>
+                    <p>Claude is an alternative AI model for content generation. You'll need an API key from <a href="https://console.anthropic.com/" target="_blank">Anthropic</a>.</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Unsplash</h6>
+                    <p>Unsplash provides high-quality images for your articles. The API key is optional but recommended for better featured images. Get an API key from <a href="https://unsplash.com/developers" target="_blank">Unsplash Developers</a>.</p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> You only need to set up either GPT or Claude (or both for flexibility). 
+                    Your API keys are stored securely and are only used for generating content through this application.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle password visibility
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const inputField = document.getElementById(targetId);
+                
+                // Toggle password visibility
+                if (inputField.type === 'password') {
+                    inputField.type = 'text';
+                    this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                } else {
+                    inputField.type = 'password';
+                    this.innerHTML = '<i class="fas fa-eye"></i>';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

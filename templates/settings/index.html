@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - BlogAuto AI{% endblock %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="settings-menu mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <nav>
+                        <ul class="nav nav-pills nav-fill">
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="{{ url_for('settings.index') }}">
+                                    <i class="fas fa-cog me-2"></i> Overview
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('settings.wordpress_config') }}">
+                                    <i class="fab fa-wordpress me-2"></i> WordPress
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('settings.api_keys') }}">
+                                    <i class="fas fa-key me-2"></i> API Keys
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">WordPress Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="fab fa-wordpress fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">WordPress Settings</h6>
+                                <p class="mb-0 text-muted">Configure your WordPress sites for content publishing</p>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('settings.wordpress_config') }}" class="btn btn-primary">
+                            <i class="fas fa-cog me-1"></i> Manage WordPress
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">API Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="fas fa-key fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">API Keys</h6>
+                                <p class="mb-0 text-muted">Set up API keys for OpenAI, Claude, and Unsplash</p>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('settings.api_keys') }}" class="btn btn-primary">
+                            <i class="fas fa-key me-1"></i> Manage API Keys
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Application Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>About BlogAuto AI</h6>
+                        <p>BlogAuto AI is an intelligent WordPress blog automation platform that leverages AI to generate high-quality content and automate publishing schedules.</p>
+                        
+                        <h6 class="mt-4">Features</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> AI-powered content generation</li>
+                            <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Scheduled publishing automation</li>
+                            <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Multiple WordPress site management</li>
+                            <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> SEO optimization tools</li>
+                            <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Content export options</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>Supported AI Models</h6>
+                        <div class="d-flex align-items-center mb-3 p-2 border rounded">
+                            <div class="me-3">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt="OpenAI" width="40" height="40">
+                            </div>
+                            <div>
+                                <h6 class="mb-0">OpenAI GPT</h6>
+                                <p class="mb-0 small text-muted">Latest supported model: gpt-4o</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-3 p-2 border rounded">
+                            <div class="me-3">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Anthropic_logo.svg" alt="Anthropic" width="40" height="40">
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Anthropic Claude</h6>
+                                <p class="mb-0 small text-muted">Latest supported model: claude-3-5-sonnet-20241022</p>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mt-4">Getting Started</h6>
+                        <ol>
+                            <li>Configure your WordPress sites in <a href="{{ url_for('settings.wordpress_config') }}">WordPress Settings</a></li>
+                            <li>Add your API keys in <a href="{{ url_for('settings.api_keys') }}">API Keys</a></li>
+                            <li><a href="{{ url_for('article.create') }}">Create your first article</a> using AI</li>
+                            <li>Schedule or publish immediately to your WordPress site</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

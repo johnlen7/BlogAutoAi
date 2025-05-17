@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Articles - BlogAuto AI{% endblock %}
+
+{% block page_title %}Articles{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Filter Articles</h5>
+            <a href="{{ url_for('article.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> New Article
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <form id="articleFilters" action="{{ url_for('dashboard.article_list') }}" method="get" class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search titles..." name="search" value="{{ search }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="status">
+                    <option value="" {% if not status %}selected{% endif %}>All Statuses</option>
+                    <option value="draft" {% if status == 'draft' %}selected{% endif %}>Drafts</option>
+                    <option value="scheduled" {% if status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                    <option value="published" {% if status == 'published' %}selected{% endif %}>Published</option>
+                    <option value="failed" {% if status == 'failed' %}selected{% endif %}>Failed</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="sort">
+                    <option value="updated_desc" {% if sort == 'updated_desc' %}selected{% endif %}>Newest Updated</option>
+                    <option value="updated_asc" {% if sort == 'updated_asc' %}selected{% endif %}>Oldest Updated</option>
+                    <option value="created_desc" {% if sort == 'created_desc' %}selected{% endif %}>Newest Created</option>
+                    <option value="created_asc" {% if sort == 'created_asc' %}selected{% endif %}>Oldest Created</option>
+                    <option value="title_asc" {% if sort == 'title_asc' %}selected{% endif %}>Title (A-Z)</option>
+                    <option value="title_desc" {% if sort == 'title_desc' %}selected{% endif %}>Title (Z-A)</option>
+                    <option value="scheduled_asc" {% if sort == 'scheduled_asc' %}selected{% endif %}>Schedule (Soonest)</option>
+                    <option value="scheduled_desc" {% if sort == 'scheduled_desc' %}selected{% endif %}>Schedule (Latest)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i> Apply
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="clearFilters">
+                        <i class="fas fa-times me-1"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Article List</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if articles %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Scheduled</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in articles %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="article-icon me-3">
+                                            {% if article.ai_model %}
+                                                <span class="badge bg-info">{{ article.ai_model.value }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ article.title }}</h6>
+                                            {% if article.wordpress_post_id %}
+                                                <small class="text-muted">WordPress ID: {{ article.wordpress_post_id }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ article.status.value }}">{{ article.status.value }}</span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ article.created_at.strftime('%b %d, %Y') }}</small>
+                                </td>
+                                <td>
+                                    {% if article.scheduled_date %}
+                                        <small class="text-muted">{{ article.scheduled_date.strftime('%b %d, %Y %H:%M') }}</small>
+                                        {% if article.repeat_schedule.value != 'none' %}
+                                            <br><small class="text-muted"><i class="fas fa-sync-alt me-1"></i>{{ article.repeat_schedule.value }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <small class="text-muted">—</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('article.edit', article_id=article.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Edit Article">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('dashboard.article_detail', article_id=article.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="View Details">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-article" data-article-id="{{ article.id }}" data-article-title="{{ article.title }}" data-bs-toggle="tooltip" title="Delete Article">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li><a class="dropdown-item export-article" href="#" data-article-id="{{ article.id }}" data-format="markdown"><i class="fas fa-file-alt me-2"></i>Export as Markdown</a></li>
+                                                <li><a class="dropdown-item" href="{{ url_for('article.edit', article_id=article.id) }}"><i class="fas fa-pencil-alt me-2"></i>Edit Content</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-newspaper text-muted mb-3" style="font-size: 3rem;"></i>
+                <h5>No articles found</h5>
+                {% if search or status %}
+                    <p class="text-muted mb-3">Try changing your filter criteria</p>
+                    <a href="{{ url_for('dashboard.article_list') }}" class="btn btn-outline-primary">Clear Filters</a>
+                {% else %}
+                    <p class="text-muted mb-3">Start creating content for your blog</p>
+                    <a href="{{ url_for('article.create') }}" class="btn btn-primary">Create Your First Article</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

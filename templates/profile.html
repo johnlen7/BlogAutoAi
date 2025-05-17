@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - BlogAuto AI{% endblock %}
+
+{% block page_title %}Your Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Account Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4 text-center">
+                    <div class="avatar-circle mx-auto mb-3 d-flex align-items-center justify-content-center bg-primary rounded-circle" style="width: 100px; height: 100px;">
+                        <span style="font-size: 2.5rem; color: white;">{{ current_user.username[0]|upper }}</span>
+                    </div>
+                    <h4>{{ current_user.username }}</h4>
+                    <p class="text-muted mb-0">{{ current_user.email }}</p>
+                </div>
+                
+                <hr>
+                
+                <h5 class="mb-3">Change Password</h5>
+                <form method="post" action="{{ url_for('auth.profile') }}">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-key me-1"></i> Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Links</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="{{ url_for('settings.wordpress_config') }}" class="btn btn-outline-primary d-block p-3">
+                            <i class="fab fa-wordpress me-2"></i> WordPress Settings
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ url_for('settings.api_keys') }}" class="btn btn-outline-primary d-block p-3">
+                            <i class="fas fa-key me-2"></i> API Keys
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ url_for('dashboard.article_list') }}" class="btn btn-outline-primary d-block p-3">
+                            <i class="fas fa-newspaper me-2"></i> Your Articles
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ url_for('article.create') }}" class="btn btn-outline-primary d-block p-3">
+                            <i class="fas fa-plus-circle me-2"></i> Create Article
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Login - BlogAuto AI{% endblock %}
+
+{% block auth_content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h1 class="h3 fw-bold">BlogAuto AI</h1>
+                        <p class="text-muted">Intelligent WordPress Blog Automation</p>
+                    </div>
+                    
+                    <h2 class="card-title text-center mb-4">Sign In</h2>
+                    
+                    <form method="post" action="{{ url_for('auth.login') }}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" required autofocus>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                            <label class="form-check-label" for="remember">Remember me</label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Sign In</button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Sign Up</a></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4 text-muted">
+                <p>&copy; {{ now.year }} BlogAuto AI. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

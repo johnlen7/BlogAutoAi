@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - BlogAuto AI{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div id="dashboardStats">
+    <!-- Stats Overview Cards -->
+    <div class="row">
+        <div class="col-md-6 col-xl">
+            <div class="card stats-card total mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Total Articles</h6>
+                            <h2 class="my-2 stats-count" data-status="total">{{ stats.total }}</h2>
+                            <p class="mb-0 text-muted">All your articles</p>
+                        </div>
+                        <div class="stats-icon text-primary">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl">
+            <div class="card stats-card draft mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Draft</h6>
+                            <h2 class="my-2 stats-count" data-status="draft">{{ stats.draft }}</h2>
+                            <p class="mb-0 text-muted">Unpublished articles</p>
+                        </div>
+                        <div class="stats-icon text-secondary">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl">
+            <div class="card stats-card scheduled mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Scheduled</h6>
+                            <h2 class="my-2 stats-count" data-status="scheduled">{{ stats.scheduled }}</h2>
+                            <p class="mb-0 text-muted">Pending publication</p>
+                        </div>
+                        <div class="stats-icon text-warning">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl">
+            <div class="card stats-card published mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Published</h6>
+                            <h2 class="my-2 stats-count" data-status="published">{{ stats.published }}</h2>
+                            <p class="mb-0 text-muted">Live on your blog</p>
+                        </div>
+                        <div class="stats-icon text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl">
+            <div class="card stats-card failed mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Failed</h6>
+                            <h2 class="my-2 stats-count" data-status="failed">{{ stats.failed }}</h2>
+                            <p class="mb-0 text-muted">Publishing errors</p>
+                        </div>
+                        <div class="stats-icon text-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard Content -->
+    <div class="row">
+        <!-- Chart and Quick Actions -->
+        <div class="col-lg-8 mb-4">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Article Statistics</h5>
+                    <a href="{{ url_for('dashboard.article_list') }}" class="btn btn-sm btn-outline-primary">View All Articles</a>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:280px;">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{{ url_for('article.create') }}" class="btn btn-primary d-block p-3">
+                                <i class="fas fa-plus-circle me-2"></i> New Article
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('settings.wordpress_config') }}" class="btn btn-outline-primary d-block p-3">
+                                <i class="fab fa-wordpress me-2"></i> WordPress Settings
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('settings.api_keys') }}" class="btn btn-outline-primary d-block p-3">
+                                <i class="fas fa-key me-2"></i> Manage API Keys
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('dashboard.article_list') }}?status=scheduled" class="btn btn-outline-primary d-block p-3">
+                                <i class="fas fa-calendar-alt me-2"></i> View Scheduled
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar Cards -->
+        <div class="col-lg-4">
+            <!-- Recent Articles -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Articles</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if recent_articles %}
+                            {% for article in recent_articles %}
+                                <a href="{{ url_for('article.edit', article_id=article.id) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 text-truncate">{{ article.title }}</h6>
+                                        <small class="text-muted">{{ article.updated_at.strftime('%b %d') }}</small>
+                                    </div>
+                                    <small class="mb-1 d-block">
+                                        <span class="badge bg-{{ article.status.value }}">{{ article.status.value }}</span>
+                                    </small>
+                                </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item text-center py-4">
+                                <i class="fas fa-newspaper text-muted mb-2" style="font-size: 2rem;"></i>
+                                <p class="mb-0">No articles yet</p>
+                                <a href="{{ url_for('article.create') }}" class="btn btn-sm btn-primary mt-2">Create your first article</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scheduled Articles -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Upcoming Publications</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if scheduled_articles %}
+                            {% for article in scheduled_articles %}
+                                <a href="{{ url_for('article.edit', article_id=article.id) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 text-truncate">{{ article.title }}</h6>
+                                    </div>
+                                    <small class="text-muted d-block">
+                                        <i class="far fa-clock me-1"></i> {{ article.scheduled_date.strftime('%b %d, %Y at %H:%M') }}
+                                    </small>
+                                    {% if article.repeat_schedule.value != 'none' %}
+                                        <small class="d-block text-muted">
+                                            <i class="fas fa-redo-alt me-1"></i> Repeats {{ article.repeat_schedule.value }}
+                                        </small>
+                                    {% endif %}
+                                </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item text-center py-4">
+                                <i class="fas fa-calendar-alt text-muted mb-2" style="font-size: 2rem;"></i>
+                                <p class="mb-0">No scheduled articles</p>
+                                <small class="text-muted d-block mt-1">Schedule articles to automate your publishing</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scheduler Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Scheduler Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <span class="badge bg-{{ 'success' if scheduler_status.status == 'running' else 'danger' }} p-2" style="font-size: 1rem;" id="schedulerStatus">
+                                {{ scheduler_status.status }}
+                            </span>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Publishing Robot</h6>
+                            <small class="text-muted">Automatic background publisher</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Next check:</span>
+                        <span class="text-muted" id="nextSchedulerRun">{{ scheduler_status.next_run or 'Not scheduled' }}</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Active jobs:</span>
+                        <span class="text-muted">{{ scheduler_status.jobs }}</span>
+                    </div>
+                    
+                    <div class="mt-3 text-center">
+                        <p class="small text-muted mb-0">This system automatically checks for and publishes scheduled articles</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
