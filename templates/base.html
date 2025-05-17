@@ -45,6 +45,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ url_for('automation.index') }}" class="nav-link {% if 'automation.' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-robot"></i> Automação
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ url_for('settings.index') }}" class="nav-link {% if 'settings.' in request.endpoint %}active{% endif %}">
                         <i class="fas fa-cog"></i> Settings
                     </a>

@@ -50,11 +50,13 @@ with app.app_context():
     from routes.dashboard_routes import dashboard_bp
     from routes.article_routes import article_bp
     from routes.settings_routes import settings_bp
+    from routes.automation_routes import automation_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(article_bp)
     app.register_blueprint(settings_bp)
+    app.register_blueprint(automation_bp)
     
     # Setup login manager loader
     from models import User

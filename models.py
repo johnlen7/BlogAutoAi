@@ -91,8 +91,8 @@ class Article(db.Model):
     ai_model = db.Column(db.Enum(AIModel))
     keyword = db.Column(db.String(128))
     source_url = db.Column(db.String(512))
-    # Movendo o Enum ContentSource para depois da definição da classe Article
-    
+    # Usando uma string simples para evitar problemas de inicialização
+    content_source_name = db.Column(db.String(20), default="keyword")
     repeat_schedule = db.Column(db.Enum(RepeatSchedule), default=RepeatSchedule.NONE)
     scheduled_date = db.Column(db.DateTime)
     publish_attempt_count = db.Column(db.Integer, default=0)
@@ -101,6 +101,10 @@ class Article(db.Model):
     
     is_automated = db.Column(db.Boolean, default=False)  # Flag para artigos gerados automaticamente
     word_count = db.Column(db.Integer)  # Contagem de palavras do artigo
+    
+    # Relações para automação
+    theme_id = db.Column(db.Integer, db.ForeignKey('automation_theme.id'), nullable=True)
+    news_item_id = db.Column(db.Integer, db.ForeignKey('news_item.id'), nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -149,11 +153,12 @@ class SchedulerLog(db.Model):
         return f'<SchedulerLog {self.log_type.value}: {self.message[:30]}>'
 
 
-class ContentSource(enum.Enum):
-    KEYWORD = "keyword"
-    RSS = "rss"
-    URL = "url"
+# Classes de automação diretamente neste arquivo para evitar dependências circulares
 
+class ContentSourceType(enum.Enum):
+    KEYWORD = "keyword"
+    RSS = "rss" 
+    URL = "url"
 
 class AutomationTheme(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -165,10 +170,6 @@ class AutomationTheme(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
-    # Relacionamentos
-    rss_feeds = db.relationship('RSSFeed', backref='theme', lazy=True)
-    articles = db.relationship('Article', backref='theme', lazy=True)
     
     def __repr__(self):
         return f'<AutomationTheme {self.name}>'
@@ -188,9 +189,6 @@ class RSSFeed(db.Model):
     theme_id = db.Column(db.Integer, db.ForeignKey('automation_theme.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # Relacionamentos
-    news_items = db.relationship('NewsItem', backref='rss_feed', lazy=True)
-    
     def __repr__(self):
         return f'<RSSFeed {self.name}>'
 
@@ -208,9 +206,6 @@ class NewsItem(db.Model):
     
     rss_feed_id = db.Column(db.Integer, db.ForeignKey('rss_feed.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
-    # Relacionamento com artigos gerados a partir desta notícia
-    articles = db.relationship('Article', backref='news_source', lazy=True)
     
     def __repr__(self):
         return f'<NewsItem {self.title}>'
@@ -231,9 +226,6 @@ class AutomationSettings(db.Model):
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     wordpress_config_id = db.Column(db.Integer, db.ForeignKey('word_press_config.id'))
-    
-    # Relação com a configuração WordPress
-    wordpress_config = db.relationship('WordPressConfig')
     
     def __repr__(self):
         return f'<AutomationSettings user_id={self.user_id}>'

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Automação em Desenvolvimento - BlogAuto AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Automação de Conteúdo</h2>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h3 class="mb-3">Recursos em Desenvolvimento</h3>
+                    <div class="alert alert-info">
+                        <p><strong>As funcionalidades de automação estão sendo implementadas!</strong></p>
+                        <p>Estamos trabalhando para oferecer:</p>
+                        <ul>
+                            <li>Automação completa da criação de artigos com temas personalizáveis</li>
+                            <li>Integração com feeds RSS para captura automática de notícias</li>
+                            <li>Reescrita automática de conteúdo utilizando IA</li>
+                            <li>Agendamento inteligente com suporte para fuso horário UTC-3 (Brasília)</li>
+                            <li>Configuração de intervalos personalizados entre publicações</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Funcionalidades Planejadas</h4>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex align-items-center">
+                                    <span class="badge bg-warning me-2">Em breve</span>
+                                    <div>
+                                        <h5 class="mb-1">Temas Personalizados</h5>
+                                        <p class="mb-0 text-muted">Configure e priorize temas específicos para seus artigos</p>
+                                    </div>
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <span class="badge bg-warning me-2">Em breve</span>
+                                    <div>
+                                        <h5 class="mb-1">Fontes RSS</h5>
+                                        <p class="mb-0 text-muted">Integre feeds RSS para obter inspiração de conteúdo atual</p>
+                                    </div>
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <span class="badge bg-warning me-2">Em breve</span>
+                                    <div>
+                                        <h5 class="mb-1">Agendamento Inteligente</h5>
+                                        <p class="mb-0 text-muted">Configure horários ideais para publicação de conteúdo</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Seu Feedback</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>Enquanto desenvolvemos as funcionalidades de automação, gostaríamos de saber mais sobre suas necessidades:</p>
+                            <form>
+                                <div class="mb-3">
+                                    <label for="feedbackTopics" class="form-label">Quais tópicos você deseja automatizar?</label>
+                                    <textarea class="form-control" id="feedbackTopics" rows="2" placeholder="Ex: tecnologia, saúde, finanças..."></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="feedbackInterval" class="form-label">Qual intervalo de publicação seria ideal para você?</label>
+                                    <select class="form-select" id="feedbackInterval">
+                                        <option selected>Selecione uma opção</option>
+                                        <option value="6">A cada 6 horas</option>
+                                        <option value="12">A cada 12 horas</option>
+                                        <option value="24">Uma vez por dia</option>
+                                        <option value="48">A cada 2 dias</option>
+                                        <option value="168">Uma vez por semana</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="feedbackIdeas" class="form-label">Alguma sugestão ou ideia adicional?</label>
+                                    <textarea class="form-control" id="feedbackIdeas" rows="3" placeholder="Compartilhe suas ideias..."></textarea>
+                                </div>
+                                <button type="button" class="btn btn-primary" disabled>Enviar Feedback (em breve)</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-center">
+            <a href="{{ url_for('article.create') }}" class="btn btn-primary">Voltar para criação de artigos</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

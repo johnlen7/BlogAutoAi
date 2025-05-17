@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block title %}Automação - BlogAuto AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Central de Automação</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Visão Geral</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Temas</h5>
+                                    <h2>{{ stats.total_themes }}</h2>
+                                    <p>{{ stats.active_themes }} ativos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Feeds RSS</h5>
+                                    <h2>{{ stats.total_feeds }}</h2>
+                                    <p>{{ stats.active_feeds }} ativos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Notícias</h5>
+                                    <h2>{{ stats.unprocessed_news }}</h2>
+                                    <p>não processadas</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Artigos Automáticos</h5>
+                                    <h2>{{ stats.automated_articles }}</h2>
+                                    <p>gerados</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Temas</h5>
+                </div>
+                <div class="card-body">
+                    {% if themes %}
+                    <div class="list-group mb-3">
+                        {% for theme in themes %}
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>{{ theme.name }}</h6>
+                                <small>{{ theme.keywords[:50] }}{% if theme.keywords|length > 50 %}...{% endif %}</small>
+                            </div>
+                            <div>
+                                {% if theme.is_active %}
+                                <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-center">Nenhum tema configurado</p>
+                    {% endif %}
+                    <div class="d-grid">
+                        <a href="{{ url_for('automation.themes_list') }}" class="btn btn-outline-primary">Gerenciar Temas</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Feeds RSS</h5>
+                </div>
+                <div class="card-body">
+                    {% if feeds %}
+                    <div class="list-group mb-3">
+                        {% for feed in feeds %}
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>{{ feed.name }}</h6>
+                                <small>{{ feed.url|truncate(40) }}</small>
+                            </div>
+                            <div>
+                                {% if feed.is_active %}
+                                <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-center">Nenhum feed configurado</p>
+                    {% endif %}
+                    <div class="d-grid">
+                        <a href="{{ url_for('automation.feeds_list') }}" class="btn btn-outline-primary">Gerenciar Feeds</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Configurações de Automação</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Intervalo de Postagem</h5>
+                                    <h2>{{ settings.post_interval_hours }}</h2>
+                                    <p>horas</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Fuso Horário</h5>
+                                    <h2>UTC{{ settings.timezone_offset }}</h2>
+                                    <p>{% if settings.timezone_offset == -3 %}Brasília{% endif %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Próxima Execução</h5>
+                                    {% if settings.next_scheduled_run %}
+                                    <h2>{{ settings.next_scheduled_run.strftime('%H:%M') }}</h2>
+                                    <p>{{ settings.next_scheduled_run.strftime('%d/%m/%Y') }}</p>
+                                    {% else %}
+                                    <h2>--:--</h2>
+                                    <p>Não agendado</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <a href="{{ url_for('automation.settings') }}" class="btn btn-outline-primary">Configurar Automação</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Ações Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('automation.news_list') }}" class="btn btn-lg btn-outline-primary w-100">
+                                <i class="fas fa-newspaper"></i><br>
+                                Ver Notícias Capturadas
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button id="fetch-all-feeds" class="btn btn-lg btn-outline-success w-100">
+                                <i class="fas fa-sync"></i><br>
+                                Atualizar Todos os Feeds
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button id="toggle-automation" class="btn btn-lg {% if settings.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %} w-100">
+                                <i class="fas {% if settings.is_active %}fa-pause{% else %}fa-play{% endif %}"></i><br>
+                                {% if settings.is_active %}Pausar Automação{% else %}Ativar Automação{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Botão para buscar todos os feeds
+        document.getElementById('fetch-all-feeds').addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i><br>Atualizando...';
+            
+            fetch('{{ url_for("automation.api_fetch_all_feeds") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Exibir resultados
+                    let resultHtml = '<ul>';
+                    data.results.forEach(function(result) {
+                        if (result.success) {
+                            resultHtml += `<li>${result.feed_name}: ${result.items_count} novos itens</li>`;
+                        } else {
+                            resultHtml += `<li>${result.feed_name}: Erro - ${result.error}</li>`;
+                        }
+                    });
+                    resultHtml += '</ul>';
+                    
+                    // Exibir alerta com resultados
+                    Swal.fire({
+                        title: 'Feeds Atualizados',
+                        html: resultHtml,
+                        icon: 'success'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Erro',
+                        text: data.message,
+                        icon: 'error'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                Swal.fire({
+                    title: 'Erro',
+                    text: 'Ocorreu um erro ao atualizar os feeds',
+                    icon: 'error'
+                });
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-sync"></i><br>Atualizar Todos os Feeds';
+            });
+        });
+        
+        // Botão para ativar/desativar automação
+        document.getElementById('toggle-automation').addEventListener('click', function() {
+            // Implementar função para ativar/desativar automação
+            Swal.fire({
+                title: '{% if settings.is_active %}Pausar{% else %}Ativar{% endif %} Automação',
+                text: '{% if settings.is_active %}Deseja pausar a automação de publicações?{% else %}Deseja ativar a automação de publicações?{% endif %}',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '{% if settings.is_active %}Pausar{% else %}Ativar{% endif %}',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirecionar para página de configurações
+                    window.location.href = '{{ url_for("automation.settings") }}';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
