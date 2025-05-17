@@ -366,7 +366,8 @@ def test_api_key():
     # Test key based on type
     if api_type.lower() == 'gpt':
         # Test OpenAI key
-        from openai import OpenAI, AuthenticationError
+        from openai import OpenAI
+        import httpx
         
         try:
             client = OpenAI(api_key=api_key)
@@ -374,13 +375,20 @@ def test_api_key():
             response = client.models.list()
             return jsonify({
                 'success': True,
-                'message': 'OpenAI API key is valid.'
+                'message': 'OpenAI API key is valid and working! You can now use GPT-4o-mini for content generation.'
             })
-        except AuthenticationError:
-            return jsonify({
-                'success': False,
-                'message': 'Invalid OpenAI API key.'
-            })
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                return jsonify({
+                    'success': False,
+                    'message': 'Invalid OpenAI API key. Please check your key and try again.'
+                })
+            else:
+                logger.error(f"Error testing OpenAI API key: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'message': f"API Error: {str(e)}"
+                }), 500
         except Exception as e:
             logger.error(f"Error testing OpenAI API key: {str(e)}")
             return jsonify({
@@ -394,10 +402,16 @@ def test_api_key():
         
         try:
             client = anthropic.Anthropic(api_key=api_key)
-            # Just initialize the client - Anthropic doesn't have a simple endpoint to test the key
+            # Make a simple request to test the key validity
+            models = client.models.list()
             return jsonify({
                 'success': True,
-                'message': 'Claude API key format is valid. Full validation happens when you use it.'
+                'message': 'Claude API key is valid and working! You can now use Claude 3.5 Haiku for content generation.'
+            })
+        except anthropic.AuthenticationError:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid Anthropic API key. Please check your key and try again.'
             })
         except Exception as e:
             logger.error(f"Error testing Claude API key: {str(e)}")

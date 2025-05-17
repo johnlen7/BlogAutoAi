@@ -17,8 +17,8 @@ class Config:
     }
     
     # API defaults
-    DEFAULT_CLAUDE_MODEL = "claude-3-5-sonnet-20241022"  # the newest Anthropic model is "claude-3-5-sonnet-20241022" which was released October 22, 2024
-    DEFAULT_GPT_MODEL = "gpt-4o"  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+    DEFAULT_CLAUDE_MODEL = "claude-3-5-haiku-20240307"  # Using Claude 3.5 Haiku as requested
+    DEFAULT_GPT_MODEL = "gpt-4o-mini"  # Using GPT-4o-mini as requested
     
     # Unsplash API
     UNSPLASH_API_URL = "https://api.unsplash.com"
