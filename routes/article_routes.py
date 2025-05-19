@@ -366,25 +366,31 @@ def publish_article():
 @login_required
 def schedule_article():
     """API endpoint to schedule article for future publishing"""
-    # Get request data
-    data = request.json
-    article_id = data.get('article_id')
-    scheduled_date = data.get('scheduled_date')
-    repeat_schedule_str = data.get('repeat_schedule', 'none')
-    
-    if not article_id:
-        return jsonify({
-            'success': False,
-            'message': 'Article ID is required.'
-        }), 400
-    
-    if not scheduled_date:
-        return jsonify({
-            'success': False,
-            'message': 'Scheduled date is required.'
-        }), 400
-    
     try:
+        # Get request data
+        data = request.json
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid request data.'
+            }), 400
+            
+        article_id = data.get('article_id')
+        scheduled_date = data.get('scheduled_date')
+        repeat_schedule_str = data.get('repeat_schedule', 'none')
+        
+        if not article_id:
+            return jsonify({
+                'success': False,
+                'message': 'Article ID is required.'
+            }), 400
+        
+        if not scheduled_date:
+            return jsonify({
+                'success': False,
+                'message': 'Scheduled date is required.'
+            }), 400
+        
         # Get article
         article = Article.query.get(article_id)
         
@@ -425,8 +431,6 @@ def schedule_article():
             log_type=LogType.INFO
         )
         db.session.add(log)
-        
-        # Save changes
         db.session.commit()
         
         return jsonify({
