@@ -1,6 +1,12 @@
 from app import app  # noqa: F401
 from flask import request, session, redirect, url_for
 
+# Importar e registrar blueprints
+from routes.analytics_routes import analytics
+
+# Registrar blueprint
+app.register_blueprint(analytics)
+
 @app.route('/set_language/<lang>')
 def set_language(lang):
     """Set the user's preferred language"""
