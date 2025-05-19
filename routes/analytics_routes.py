@@ -57,7 +57,8 @@ def article_detail(article_id):
     # Obter métricas - criar objeto padrão se não existir
     metrics = article.metrics
     if not metrics:
-        metrics = ArticleMetrics(article_id=article.id)
+        metrics = ArticleMetrics()
+        metrics.article_id = article.id
         db.session.add(metrics)
         db.session.commit()
     
@@ -93,7 +94,9 @@ def update_metrics(article_id):
     # Obter ou criar métricas para o artigo
     metrics = ArticleMetrics.query.filter_by(article_id=article.id).first()
     if not metrics:
-        metrics = ArticleMetrics(article_id=article.id)
+        # Usar construtor sem argumentos e setar os atributos depois
+        metrics = ArticleMetrics()
+        metrics.article_id = article.id
         db.session.add(metrics)
     
     # Atualizar campos com dados do formulário
@@ -101,14 +104,20 @@ def update_metrics(article_id):
     
     try:
         # Métricas básicas
-        metrics.page_views = int(form_data.get('page_views', metrics.page_views))
-        metrics.unique_visitors = int(form_data.get('unique_visitors', metrics.unique_visitors))
-        metrics.avg_time_on_page = float(form_data.get('avg_time_on_page', metrics.avg_time_on_page))
+        if form_data.get('page_views'):
+            metrics.page_views = int(form_data.get('page_views'))
+        if form_data.get('unique_visitors'):
+            metrics.unique_visitors = int(form_data.get('unique_visitors'))
+        if form_data.get('avg_time_on_page'):
+            metrics.avg_time_on_page = float(form_data.get('avg_time_on_page'))
         
         # Métricas de engajamento
-        metrics.social_shares = int(form_data.get('social_shares', metrics.social_shares))
-        metrics.comments = int(form_data.get('comments', metrics.comments))
-        metrics.likes = int(form_data.get('likes', metrics.likes))
+        if form_data.get('social_shares'):
+            metrics.social_shares = int(form_data.get('social_shares'))
+        if form_data.get('comments'):
+            metrics.comments = int(form_data.get('comments'))
+        if form_data.get('likes'):
+            metrics.likes = int(form_data.get('likes'))
         
         # Atualizar timestamp
         metrics.last_updated = datetime.utcnow()
