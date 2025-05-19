@@ -505,7 +505,7 @@ def process_news_item(news_item_id):
         logger.error(f"Erro ao processar notícia: {str(e)}")
         return jsonify({'success': False, 'message': f'Erro ao processar notícia: {str(e)}'}), 500
 
-@automation_bp.route('/schedule', methods=['POST'])
+@automation_bp.route('/schedule_automation', methods=['POST'])
 @login_required
 def schedule_automation():
     """Agendar geração e publicação automática de artigos"""
