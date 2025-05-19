@@ -277,7 +277,7 @@
                     
                     <div class="mb-3">
                         <label for="timezoneOffset" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Fuso Horário{% else %}Timezone{% endif %}</label>
-                        <select class="form-select" id="timezoneOffset" required>
+                        <select class="form-select" id="timezoneOffset" name="timezone_offset" required>
                             <option value="-3" {% if automation_settings and automation_settings.timezone_offset == -3 %}selected{% endif %}>UTC-3 (Brasília)</option>
                             <option value="-2" {% if automation_settings and automation_settings.timezone_offset == -2 %}selected{% endif %}>UTC-2</option>
                             <option value="-1" {% if automation_settings and automation_settings.timezone_offset == -1 %}selected{% endif %}>UTC-1</option>
@@ -291,7 +291,7 @@
                     <div class="row mb-3">
                         <div class="col">
                             <label for="activeHoursStart" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Hora de Início{% else %}Start Hour{% endif %}</label>
-                            <select class="form-select" id="activeHoursStart" required>
+                            <select class="form-select" id="activeHoursStart" name="active_hours_start" required>
                                 {% for hour in range(0, 24) %}
                                 <option value="{{ hour }}" {% if automation_settings and automation_settings.active_hours_start == hour %}selected{% elif not automation_settings and hour == 8 %}selected{% endif %}>
                                     {{ hour }}:00
@@ -301,7 +301,7 @@
                         </div>
                         <div class="col">
                             <label for="activeHoursEnd" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Hora de Término{% else %}End Hour{% endif %}</label>
-                            <select class="form-select" id="activeHoursEnd" required>
+                            <select class="form-select" id="activeHoursEnd" name="active_hours_end" required>
                                 {% for hour in range(0, 24) %}
                                 <option value="{{ hour }}" {% if automation_settings and automation_settings.active_hours_end == hour %}selected{% elif not automation_settings and hour == 22 %}selected{% endif %}>
                                     {{ hour }}:00
@@ -313,7 +313,7 @@
                     
                     <div class="mb-3">
                         <label for="wordpressConfig" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Site WordPress{% else %}WordPress Site{% endif %}</label>
-                        <select class="form-select" id="wordpressConfig" required>
+                        <select class="form-select" id="wordpressConfig" name="wordpress_config_id" required>
                             <option value="">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Selecione um site{% else %}Select a site{% endif %}</option>
                             {% for config in wordpress_configs %}
                             <option value="{{ config.id }}" 
