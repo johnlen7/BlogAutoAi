@@ -432,7 +432,7 @@ def save_automation_settings():
 @automation_bp.route('/feeds/<int:feed_id>/fetch', methods=['POST'])
 @login_required
 def fetch_feed(feed_id):
-    """Buscar e processar novas notícias de um feed RSS"""
+    """Buscar e processar novas notícias de um feed RSS com tratamento de erros aprimorado"""
     from services.rss_service import fetch_and_process_feed
     
     feed = RSSFeed.query.filter_by(id=feed_id, user_id=current_user.id).first()
@@ -442,11 +442,20 @@ def fetch_feed(feed_id):
     
     try:
         # Buscar e processar o feed
-        new_items_count, total_items = fetch_and_process_feed(feed)
+        new_items, total_items = fetch_and_process_feed(feed)
+        new_items_count = len(new_items) if new_items else 0
         
         # Atualizar a data da última busca
         feed.last_fetch = datetime.utcnow()
         db.session.commit()
+        
+        # Registrar ação no monitor
+        AutomationMonitor.register_event(
+            current_user.id,
+            "update",
+            f"Feed '{feed.name}' atualizado: {new_items_count} novos itens",
+            "success"
+        )
         
         return jsonify({
             'success': True, 
@@ -457,6 +466,15 @@ def fetch_feed(feed_id):
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erro ao buscar feed: {str(e)}")
+        
+        # Registrar falha no monitor
+        AutomationMonitor.register_event(
+            current_user.id,
+            "error",
+            f"Erro ao processar feed '{feed.name}': {str(e)[:100]}...",
+            "error"
+        )
+        
         return jsonify({'success': False, 'message': f'Erro ao buscar feed: {str(e)}'}), 500
 
 @automation_bp.route('/news/<int:news_item_id>/process', methods=['POST'])
@@ -592,38 +610,37 @@ def repair_scheduled_articles():
 @automation_bp.route('/fetch_all_feeds', methods=['GET'])
 @login_required
 def fetch_all_feeds():
-    """Atualiza todos os feeds RSS do usuário"""
+    """Atualiza todos os feeds RSS do usuário usando processador aprimorado"""
     try:
-        from services.rss_service import fetch_and_process_feed
+        from services.news_processor import fetch_process_all_feeds
         
-        feeds = RSSFeed.query.filter_by(user_id=current_user.id, is_active=True).all()
-        if not feeds:
+        # Usar o novo processador aprimorado para buscar e processar todos os feeds
+        stats = fetch_process_all_feeds(current_user.id)
+        
+        if stats['feeds_processed'] == 0:
             flash('Nenhum feed RSS ativo encontrado.', 'info')
             return redirect(url_for('automation.monitoring'))
         
-        # Processar cada feed
-        updated_count = 0
-        news_count = 0
-        
-        for feed in feeds:
-            try:
-                new_items = fetch_and_process_feed(feed)
-                if new_items and len(new_items) > 0:
-                    news_count += len(new_items)
-                updated_count += 1
-            except Exception as feed_error:
-                logger.error(f"Erro ao processar feed {feed.name}: {str(feed_error)}")
-                continue
-        
         # Registrar ação no monitor
+        message = (f"Processados {stats['feeds_processed']} feeds ({stats['new_items']} novas notícias). "
+                  f"{stats['feeds_with_errors']} feeds com erros.")
+                  
+        status = "warning" if stats['feeds_with_errors'] > 0 else "success"
+        
         AutomationMonitor.register_event(
             current_user.id,
             "update",
-            f"Atualizados {updated_count} feeds, {news_count} novas notícias",
-            "success"
+            message,
+            status
         )
         
-        flash(f'{updated_count} feeds foram atualizados, com {news_count} novas notícias encontradas.', 'success')
+        # Exibir mensagem para o usuário
+        if stats['feeds_with_errors'] > 0:
+            flash(f'{stats["feeds_processed"]} feeds atualizados com {stats["new_items"]} novas notícias. '
+                  f'Atenção: {stats["feeds_with_errors"]} feeds tiveram erros durante o processamento.', 'warning')
+        else:
+            flash(f'{stats["feeds_processed"]} feeds foram atualizados com {stats["new_items"]} novas notícias encontradas.', 'success')
+            
         return redirect(url_for('automation.monitoring'))
     except Exception as e:
         logger.error(f"Erro ao atualizar feeds: {str(e)}")
