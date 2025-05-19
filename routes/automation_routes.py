@@ -558,19 +558,22 @@ def schedule_automation():
         schedule_time = data.get('schedule_time')
         
         if not schedule_date or not schedule_time:
-            return jsonify({'success': False, 'message': 'Data e hora de início não fornecidas'}), 400
+            flash('Data e hora de início não fornecidas. Por favor, preencha todos os campos.', 'danger')
+            return redirect(url_for('automation.index'))
         
         try:
             start_datetime = datetime.strptime(f"{schedule_date}T{schedule_time}", "%Y-%m-%dT%H:%M")
         except ValueError:
-            return jsonify({'success': False, 'message': 'Formato de data/hora inválido'}), 400
+            flash('Formato de data/hora inválido. Use o formato correto.', 'danger')
+            return redirect(url_for('automation.index'))
         
         # Verificar se a data é no futuro
         if start_datetime < datetime.now():
-            return jsonify({'success': False, 'message': 'A data e hora de início devem ser no futuro'}), 400
+            flash('A data e hora de início devem ser no futuro', 'danger')
+            return redirect(url_for('automation.index'))
         
         # Configurar publicação imediata ou não
-        publish_immediately = data.get('publish_immediately', False)
+        publish_immediately = 'publish_immediately' in data
         
         # Criar artigos programados
         ai_model_enum = AIModel.CLAUDE if ai_model == 'claude' else AIModel.GPT
@@ -651,11 +654,15 @@ def schedule_automation():
         
         db.session.commit()
         
-        return jsonify({
-            'success': True, 
-            'message': f'Agendamento configurado com sucesso para {scheduled_count} artigos a partir de {schedule_date} {schedule_time}'
-        })
+        # Atualizar próximo horário de execução nas configurações
+        if settings and scheduled_count > 0:
+            settings.next_scheduled_run = start_datetime
+            db.session.commit()
+        
+        flash(f'Agendamento configurado com sucesso para {scheduled_count} artigos a partir de {schedule_date} {schedule_time}', 'success')
+        return redirect(url_for('automation.index'))
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erro ao agendar automação: {str(e)}")
-        return jsonify({'success': False, 'message': f'Erro ao agendar automação: {str(e)}'}), 500
+        flash(f'Erro ao agendar automação: {str(e)}', 'danger')
+        return redirect(url_for('automation.index'))
