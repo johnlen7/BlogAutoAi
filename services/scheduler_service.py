@@ -267,6 +267,56 @@ def cleanup_task() -> None:
         db.session.add(log)
         db.session.commit()
 
+def restart_scheduler() -> bool:
+    """
+    Restart the scheduler service
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    global scheduler
+    
+    try:
+        # Shut down existing scheduler if running
+        if scheduler and scheduler.running:
+            scheduler.shutdown()
+            logger.info("Existing scheduler shut down")
+        
+        # Create new scheduler
+        scheduler = BackgroundScheduler()
+        
+        # Add jobs with in-memory storage
+        scheduler.add_job(
+            func=check_scheduled_articles,
+            trigger=IntervalTrigger(minutes=15),  # Check every 15 minutes
+            id='check_scheduled_articles',
+            name='Check for scheduled articles to publish',
+            replace_existing=True
+        )
+        
+        # Add a job to run the status cleanup task daily
+        scheduler.add_job(
+            func=cleanup_task,
+            trigger='cron',
+            hour=0,  # Run at midnight
+            minute=0,
+            id='cleanup_task',
+            name='Clean up old scheduled articles and logs',
+            replace_existing=True
+        )
+        
+        # Start the scheduler
+        scheduler.start()
+        logger.info("Scheduler restarted successfully")
+        
+        # Force check scheduled articles immediately
+        check_scheduled_articles()
+        
+        return True
+    except Exception as e:
+        logger.error(f"Failed to restart scheduler: {str(e)}")
+        return False
+
 def get_scheduler_status() -> dict:
     """
     Get the current status of the scheduler

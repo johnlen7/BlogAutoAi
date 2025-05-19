@@ -37,7 +37,13 @@
                                         <a href="{{ feed.url }}" target="_blank">{{ feed.url }}</a>
                                     </div>
                                 </td>
-                                <td>{{ feed.theme.name }}</td>
+                                <td>
+                                    {% for theme in themes %}
+                                        {% if theme.id == feed.theme_id %}
+                                            {{ theme.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
                                 <td>
                                     {% if feed.last_fetch %}
                                         {{ feed.last_fetch.strftime('%d/%m/%Y %H:%M') }}

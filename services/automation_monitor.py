@@ -25,6 +25,27 @@ class AutomationMonitor:
             details: Detalhes da ação
             status: Status da ação (success, failure)
         """
+        try:
+            # Determinar o tipo de log com base no status
+            log_type = LogType.INFO
+            if status == 'success':
+                log_type = LogType.SUCCESS
+            elif status == 'warning':
+                log_type = LogType.WARNING
+            elif status == 'failure' or status == 'error':
+                log_type = LogType.ERROR
+                
+            # Criar entrada no log do scheduler
+            log = SchedulerLog(
+                message=f"[{action_type.upper()}] {details}",
+                log_type=log_type
+            )
+            db.session.add(log)
+            db.session.commit()
+            logger.info(f"Evento registrado: {action_type} - {details}")
+        except Exception as e:
+            logger.error(f"Erro ao registrar evento: {str(e)}")
+            db.session.rollback()
         log_type = LogType.SUCCESS if status == 'success' else LogType.ERROR
         
         log = SchedulerLog(
