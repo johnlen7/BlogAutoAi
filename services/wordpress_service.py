@@ -29,6 +29,29 @@ class WordPressService:
         credentials = f"{self.username}:{self.app_password}"
         encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
         self.auth_header = {'Authorization': f'Basic {encoded_credentials}'}
+        
+    def _clean_content_formatting(self, content: str) -> str:
+        """
+        Limpa problemas de formatação do conteúdo antes de enviar para o WordPress
+        
+        Args:
+            content: Conteúdo do artigo
+            
+        Returns:
+            Conteúdo limpo
+        """
+        import re
+        
+        # Corrigir problemas de aspas e apóstrofos
+        content = re.sub(r"&#39;html", "'", content)
+        content = re.sub(r"'html", "'", content)
+        content = re.sub(r"&quot;", '"', content)
+        content = re.sub(r'"$', '', content)
+        
+        # Limpar outros caracteres estranhos que podem aparecer
+        content = re.sub(r"\\", "", content)
+        
+        return content
     
     def validate_connection(self) -> bool:
         """
@@ -337,7 +360,7 @@ class WordPressService:
             # Prepare post data
             post_data = {
                 "title": article.title,
-                "content": article.content,
+                "content": self._clean_content_formatting(article.content),
                 "status": "publish",  # or draft, pending, private
                 "slug": article.slug if article.slug else None,
                 "excerpt": article.meta_description if article.meta_description else '',
