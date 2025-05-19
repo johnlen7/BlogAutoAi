@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Create Article - BlogAuto AI{% endblock %}
+{% block title %}{% if session.get('language', 'pt_BR') == 'pt_BR' %}Criar Artigo - BlogAuto AI{% else %}Create Article - BlogAuto AI{% endif %}{% endblock %}
 
-{% block page_title %}Create New Article{% endblock %}
+{% block page_title %}{% if session.get('language', 'pt_BR') == 'pt_BR' %}Criar Novo Artigo{% else %}Create New Article{% endif %}{% endblock %}
 
 {% block extra_css %}
 <!-- Quill.js CSS -->
@@ -20,21 +20,21 @@
         <!-- Generation Section -->
         <div id="generationSection" class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">Generate Article Content</h5>
+                <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Gerar Conteúdo do Artigo{% else %}Generate Article Content{% endif %}</h5>
             </div>
             <div class="card-body">
                 <form id="generationForm">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Content Type</label>
+                            <label class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Tipo de Conteúdo{% else %}Content Type{% endif %}</label>
                             <select id="contentType" class="form-select">
-                                <option value="keyword">Keyword</option>
-                                <option value="url">URL (News/Article Reference)</option>
+                                <option value="keyword">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Palavra-chave{% else %}Keyword{% endif %}</option>
+                                <option value="url">{% if session.get('language', 'pt_BR') == 'pt_BR' %}URL (Referência de Notícia/Artigo){% else %}URL (News/Article Reference){% endif %}</option>
                             </select>
                         </div>
                         
                         <div class="col-md-6">
-                            <label class="form-label">AI Model</label>
+                            <label class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Modelo de IA{% else %}AI Model{% endif %}</label>
                             <div>
                                 {% if has_claude %}
                                 <div class="form-check form-check-inline">
@@ -53,21 +53,21 @@
                                 {% if not has_claude and not has_gpt %}
                                 <div class="alert alert-warning mb-0">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
-                                    You need to set up API keys in <a href="{{ url_for('settings.api_keys') }}">Settings</a>.
+                                    {% if session.get('language', 'pt_BR') == 'pt_BR' %}Você precisa configurar as chaves de API em <a href="{{ url_for('settings.api_keys') }}">Configurações</a>.{% else %}You need to set up API keys in <a href="{{ url_for('settings.api_keys') }}">Settings</a>.{% endif %}
                                 </div>
                                 {% endif %}
                             </div>
                         </div>
                         
                         <div class="col-md-8">
-                            <label class="form-label" id="contentValueLabel">Enter Keyword</label>
-                            <input type="text" id="contentValue" class="form-control" placeholder="e.g., WordPress SEO tips">
+                            <label class="form-label" id="contentValueLabel">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Digite a Palavra-chave{% else %}Enter Keyword{% endif %}</label>
+                            <input type="text" id="contentValue" class="form-control" placeholder="{% if session.get('language', 'pt_BR') == 'pt_BR' %}ex.: Dicas de SEO para WordPress{% else %}e.g., WordPress SEO tips{% endif %}">
                         </div>
                         
                         <div class="col-md-4">
-                            <label class="form-label">WordPress Site</label>
+                            <label class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Site WordPress{% else %}WordPress Site{% endif %}</label>
                             <select id="wordpressConfig" class="form-select">
-                                <option value="">Select WordPress Site</option>
+                                <option value="">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Selecione o Site WordPress{% else %}Select WordPress Site{% endif %}</option>
                                 {% for config in wp_configs %}
                                     <option value="{{ config.id }}" {% if config.is_default %}selected{% endif %}>{{ config.name }}</option>
                                 {% endfor %}
@@ -76,7 +76,7 @@
                         
                         <div class="col-12 text-center mt-4">
                             <button type="button" id="generateContent" class="btn btn-primary btn-lg px-4" {% if not has_claude and not has_gpt %}disabled{% endif %}>
-                                <i class="fas fa-robot me-2"></i> Generate Article Content
+                                <i class="fas fa-robot me-2"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Gerar Conteúdo do Artigo{% else %}Generate Article Content{% endif %}
                             </button>
                         </div>
                     </div>
@@ -90,7 +90,7 @@
                 <div class="col-md-8">
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Article Content</h5>
+                            <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Conteúdo do Artigo{% else %}Article Content{% endif %}</h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
