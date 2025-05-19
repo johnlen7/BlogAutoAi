@@ -5,6 +5,7 @@
 
 let quillEditor;
 let generatingContent = false;
+let wordpressCategories = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Quill editor if element exists
@@ -18,6 +19,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Set up event listeners for article saving and publishing
     setupArticleActionListeners();
+    
+    // Load WordPress categories if the category selector exists
+    if (document.getElementById('categorySelector')) {
+        loadWordPressCategories();
+    }
 });
 
 /**
@@ -456,6 +462,141 @@ function validateArticleForm() {
     }
 
     return true;
+}
+
+/**
+ * Load WordPress categories from API
+ */
+function loadWordPressCategories() {
+    const wpConfigSelect = document.getElementById('wordpressConfig');
+    const configId = wpConfigSelect ? wpConfigSelect.value : '';
+    
+    // If no WordPress config selected yet, add event listener for when it changes
+    if (!configId) {
+        if (wpConfigSelect) {
+            wpConfigSelect.addEventListener('change', function() {
+                loadWordPressCategories();
+            });
+        }
+        return;
+    }
+    
+    // Fetch categories from API
+    fetch(`/api/wordpress/categories?config_id=${configId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                wordpressCategories = data.categories;
+                updateCategorySelector();
+            } else {
+                console.error('Error loading WordPress categories:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching WordPress categories:', error);
+        });
+}
+
+/**
+ * Update the category selector with WordPress categories
+ */
+function updateCategorySelector() {
+    const categorySelector = document.getElementById('categorySelector');
+    if (!categorySelector) return;
+    
+    // Clear existing options (keeping the first one)
+    while (categorySelector.options.length > 1) {
+        categorySelector.remove(1);
+    }
+    
+    // Add categories as options
+    wordpressCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        categorySelector.appendChild(option);
+    });
+    
+    // Load existing categories if editing an article
+    if (document.getElementById('articleCategories').value) {
+        displaySelectedCategories(document.getElementById('articleCategories').value.split(','));
+    }
+}
+
+/**
+ * Add selected category to the list
+ */
+function addSelectedCategory() {
+    const categorySelector = document.getElementById('categorySelector');
+    const selectedCategoriesElem = document.getElementById('selectedCategories');
+    const articleCategories = document.getElementById('articleCategories');
+    
+    if (!categorySelector || !selectedCategoriesElem || !articleCategories) return;
+    
+    const categoryId = categorySelector.value;
+    if (!categoryId) return;
+    
+    const categoryName = categorySelector.options[categorySelector.selectedIndex].text;
+    
+    // Add only if not already added
+    let currentCategories = articleCategories.value ? articleCategories.value.split(',') : [];
+    if (!currentCategories.includes(categoryId)) {
+        currentCategories.push(categoryId);
+        articleCategories.value = currentCategories.join(',');
+        
+        // Update visual display
+        displaySelectedCategories(currentCategories);
+    }
+}
+
+/**
+ * Display selected categories in the UI
+ * @param {Array} categoryIds - Array of category IDs
+ */
+function displaySelectedCategories(categoryIds) {
+    const selectedCategoriesElem = document.getElementById('selectedCategories');
+    if (!selectedCategoriesElem) return;
+    
+    selectedCategoriesElem.innerHTML = '';
+    
+    categoryIds.forEach(categoryId => {
+        // Find category name
+        const category = wordpressCategories.find(cat => cat.id.toString() === categoryId.toString());
+        if (!category) return;
+        
+        // Create badge element
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-primary me-1 mb-1';
+        badge.textContent = category.name;
+        
+        // Add remove button
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn-close btn-close-white ms-1';
+        removeBtn.setAttribute('aria-label', 'Remove');
+        removeBtn.style.fontSize = '0.5rem';
+        
+        removeBtn.addEventListener('click', function() {
+            removeCategory(categoryId);
+        });
+        
+        badge.appendChild(removeBtn);
+        selectedCategoriesElem.appendChild(badge);
+    });
+}
+
+/**
+ * Remove a category from selected categories
+ * @param {string} categoryId - The category ID to remove
+ */
+function removeCategory(categoryId) {
+    const articleCategories = document.getElementById('articleCategories');
+    if (!articleCategories) return;
+    
+    let currentCategories = articleCategories.value ? articleCategories.value.split(',') : [];
+    currentCategories = currentCategories.filter(id => id.toString() !== categoryId.toString());
+    
+    articleCategories.value = currentCategories.join(',');
+    displaySelectedCategories(currentCategories);
 }
 
 /**
