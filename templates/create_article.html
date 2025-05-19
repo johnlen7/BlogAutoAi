@@ -210,23 +210,23 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="repeatSchedule" class="form-label">Repeat Publication</label>
+                        <label for="repeatSchedule" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Repetir Publicação{% else %}Repeat Publication{% endif %}</label>
                         <select class="form-select" id="repeatSchedule">
-                            <option value="none">No repeat</option>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
+                            <option value="none">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Sem repetição{% else %}No repeat{% endif %}</option>
+                            <option value="daily">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Diariamente{% else %}Daily{% endif %}</option>
+                            <option value="weekly">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Semanalmente{% else %}Weekly{% endif %}</option>
+                            <option value="monthly">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Mensalmente{% else %}Monthly{% endif %}</option>
                         </select>
                         <div class="form-text">
-                            Repeat will create a new copy of this article and schedule it for the next interval.
+                            {% if session.get('language', 'pt_BR') == 'pt_BR' %}A repetição criará uma nova cópia deste artigo e a agendará para o próximo intervalo.{% else %}Repeat will create a new copy of this article and schedule it for the next interval.{% endif %}
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Cancelar{% else %}Cancel{% endif %}</button>
                 <button type="submit" form="scheduleForm" class="btn btn-warning">
-                    <i class="fas fa-calendar-alt me-1"></i> Schedule
+                    <i class="fas fa-calendar-alt me-1"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Agendar{% else %}Schedule{% endif %}
                 </button>
             </div>
         </div>
@@ -246,12 +246,13 @@
         const contentValue = document.getElementById('contentValue');
         
         contentType.addEventListener('change', function() {
+            const language = '{{ session.get("language", "pt_BR") }}';
             if (this.value === 'keyword') {
-                contentValueLabel.textContent = 'Enter Keyword';
-                contentValue.placeholder = 'e.g., WordPress SEO tips';
+                contentValueLabel.textContent = language === 'pt_BR' ? 'Digite a Palavra-chave' : 'Enter Keyword';
+                contentValue.placeholder = language === 'pt_BR' ? 'ex.: Dicas de SEO para WordPress' : 'e.g., WordPress SEO tips';
             } else {
-                contentValueLabel.textContent = 'Enter Article URL';
-                contentValue.placeholder = 'e.g., https://example.com/news-article';
+                contentValueLabel.textContent = language === 'pt_BR' ? 'Digite a URL do Artigo' : 'Enter Article URL';
+                contentValue.placeholder = language === 'pt_BR' ? 'ex.: https://exemplo.com/noticia' : 'e.g., https://example.com/news-article';
             }
         });
         

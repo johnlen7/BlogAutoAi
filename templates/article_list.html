@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Articles - BlogAuto AI{% endblock %}
+{% block title %}{% if session.get('language', 'pt_BR') == 'pt_BR' %}Artigos - BlogAuto AI{% else %}Articles - BlogAuto AI{% endif %}{% endblock %}
 
-{% block page_title %}Articles{% endblock %}
+{% block page_title %}{% if session.get('language', 'pt_BR') == 'pt_BR' %}Artigos{% else %}Articles{% endif %}{% endblock %}
 
 {% block content %}
 <div class="card mb-4">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Filter Articles</h5>
+            <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Filtrar Artigos{% else %}Filter Articles{% endif %}</h5>
             <a href="{{ url_for('article.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus-circle me-1"></i> New Article
+                <i class="fas fa-plus-circle me-1"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Novo Artigo{% else %}New Article{% endif %}
             </a>
         </div>
     </div>
@@ -19,16 +19,16 @@
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" placeholder="Search titles..." name="search" value="{{ search }}">
+                    <input type="text" class="form-control" placeholder="{% if session.get('language', 'pt_BR') == 'pt_BR' %}Buscar títulos...{% else %}Search titles...{% endif %}" name="search" value="{{ search }}">
                 </div>
             </div>
             <div class="col-md-3">
                 <select class="form-select" name="status">
-                    <option value="" {% if not status %}selected{% endif %}>All Statuses</option>
-                    <option value="draft" {% if status == 'draft' %}selected{% endif %}>Drafts</option>
-                    <option value="scheduled" {% if status == 'scheduled' %}selected{% endif %}>Scheduled</option>
-                    <option value="published" {% if status == 'published' %}selected{% endif %}>Published</option>
-                    <option value="failed" {% if status == 'failed' %}selected{% endif %}>Failed</option>
+                    <option value="" {% if not status %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Todos os Status{% else %}All Statuses{% endif %}</option>
+                    <option value="draft" {% if status == 'draft' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Rascunhos{% else %}Drafts{% endif %}</option>
+                    <option value="scheduled" {% if status == 'scheduled' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Agendados{% else %}Scheduled{% endif %}</option>
+                    <option value="published" {% if status == 'published' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Publicados{% else %}Published{% endif %}</option>
+                    <option value="failed" {% if status == 'failed' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Falhas{% else %}Failed{% endif %}</option>
                 </select>
             </div>
             <div class="col-md-3">
