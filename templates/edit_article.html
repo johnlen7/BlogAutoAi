@@ -273,13 +273,9 @@
         
         const publishBtn = document.getElementById('publishArticle');
         if (publishBtn) {
-            const originalClick = publishBtn.onclick;
-            publishBtn.onclick = function(e) {
-                window.loadingAnimations.show('Publicando artigo no WordPress...', 'publish');
-                if (originalClick) {
-                    return originalClick.call(this, e);
-                }
-            };
+            // Não vamos iniciar a animação de carregamento ainda,
+            // pois precisamos mostrar a confirmação primeiro
+            // A animação será mostrada somente após o usuário confirmar a publicação
         }
         
         const scheduleBtn = document.getElementById('scheduleArticle');
