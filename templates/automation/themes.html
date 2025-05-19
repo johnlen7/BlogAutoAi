@@ -120,16 +120,16 @@ Finanças,investimentos economia dinheiro poupança,1</pre>
             </div>
             <div class="modal-body">
                 <form id="themeForm">
-                    <input type="hidden" id="themeId" value="">
+                    <input type="hidden" id="themeId" name="id" value="">
                     
                     <div class="mb-3">
                         <label for="themeName" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Nome do Tema{% else %}Theme Name{% endif %}</label>
-                        <input type="text" class="form-control" id="themeName" required>
+                        <input type="text" class="form-control" id="themeName" name="name" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="themeKeywords" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Palavras-chave (separadas por vírgula){% else %}Keywords (comma separated){% endif %}</label>
-                        <textarea class="form-control" id="themeKeywords" rows="3" required></textarea>
+                        <textarea class="form-control" id="themeKeywords" name="keywords" rows="3" required></textarea>
                     </div>
                     
                     <div class="mb-3">
