@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - BlogAuto AI{% endblock %}
+{% block title %}{% if session.get('language', 'pt_BR') == 'pt_BR' %}Painel - BlogAuto AI{% else %}Dashboard - BlogAuto AI{% endif %}{% endblock %}
 
-{% block page_title %}Dashboard{% endblock %}
+{% block page_title %}{% if session.get('language', 'pt_BR') == 'pt_BR' %}Painel{% else %}Dashboard{% endif %}{% endblock %}
 
 {% block content %}
 <div id="dashboardStats">

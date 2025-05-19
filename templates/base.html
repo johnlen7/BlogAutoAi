@@ -31,37 +31,37 @@
             <ul class="nav flex-column mt-4">
                 <li class="nav-item">
                     <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
-                        <i class="fas fa-chart-pie"></i> Dashboard
+                        <i class="fas fa-chart-pie"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Painel{% else %}Dashboard{% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ url_for('dashboard.article_list') }}" class="nav-link {% if request.endpoint == 'dashboard.article_list' %}active{% endif %}">
-                        <i class="fas fa-newspaper"></i> Articles
+                        <i class="fas fa-newspaper"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Artigos{% else %}Articles{% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ url_for('article.create') }}" class="nav-link {% if request.endpoint == 'article.create' %}active{% endif %}">
-                        <i class="fas fa-plus-circle"></i> Create Article
+                        <i class="fas fa-plus-circle"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Criar Artigo{% else %}Create Article{% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ url_for('automation.index') }}" class="nav-link {% if 'automation.' in request.endpoint %}active{% endif %}">
-                        <i class="fas fa-robot"></i> Automação
+                        <i class="fas fa-robot"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Automação{% else %}Automation{% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ url_for('settings.index') }}" class="nav-link {% if 'settings.' in request.endpoint %}active{% endif %}">
-                        <i class="fas fa-cog"></i> Settings
+                        <i class="fas fa-cog"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Configurações{% else %}Settings{% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ url_for('auth.profile') }}" class="nav-link {% if request.endpoint == 'auth.profile' %}active{% endif %}">
-                        <i class="fas fa-user"></i> Profile
+                        <i class="fas fa-user"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Perfil{% else %}Profile{% endif %}
                     </a>
                 </li>
                 <li class="nav-item mt-5">
                     <a href="{{ url_for('auth.logout') }}" class="nav-link">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+                        <i class="fas fa-sign-out-alt"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Sair{% else %}Logout{% endif %}
                     </a>
                 </li>
             </ul>
@@ -93,15 +93,27 @@
                     </div>
                     
                     <div class="ms-auto d-flex align-items-center">
+                        <!-- Language Selector -->
+                        <div class="dropdown me-3">
+                            <a class="btn btn-outline-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-globe me-1"></i> {{ session.get('language', 'pt_BR') | upper }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('set_language', lang='pt_BR') }}">Português (Brasil)</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('set_language', lang='en') }}">English</a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- User Menu -->
                         <div class="dropdown">
                             <a class="btn btn-outline-primary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="fas fa-user me-2"></i>Profile</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('settings.index') }}"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="fas fa-user me-2"></i>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Perfil{% else %}Profile{% endif %}</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('settings.index') }}"><i class="fas fa-cog me-2"></i>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Configurações{% else %}Settings{% endif %}</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Sair{% else %}Logout{% endif %}</a></li>
                             </ul>
                         </div>
                     </div>
@@ -127,7 +139,7 @@
             
             <!-- Footer -->
             <footer class="mt-5 mb-3 text-center text-muted">
-                <p>&copy; {{ now.year }} BlogAuto AI. All rights reserved.</p>
+                <p>&copy; {{ now.year }} BlogAuto AI. {% if session.get('language', 'pt_BR') == 'pt_BR' %}Todos os direitos reservados.{% else %}All rights reserved.{% endif %}</p>
             </footer>
         </div>
     </div>
