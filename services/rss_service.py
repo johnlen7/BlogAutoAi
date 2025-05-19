@@ -141,8 +141,14 @@ def fetch_website_content(url):
             logger.warning(f"Não foi possível extrair conteúdo de: {url}")
             
             # Tentar extrair o conteúdo bruto como fallback
-            if title_tag and title_tag.parent:
-                content = h2t.handle(str(title_tag.parent))
+            try:
+                if 'title_tag' in locals() and title_tag and hasattr(title_tag, 'parent'):
+                    from html2text import HTML2Text
+                    h2t = HTML2Text()
+                    h2t.ignore_links = False
+                    content = h2t.handle(str(title_tag.parent))
+            except Exception as e:
+                logger.error(f"Erro ao extrair conteúdo bruto: {str(e)}")
         
         return title, content
     

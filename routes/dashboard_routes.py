@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from sqlalchemy import func
 
 from app import db
-from models import Article, ArticleStatus, ArticleLog
+from models import Article, ArticleStatus, ArticleLog, AutomationSettings
 from services.scheduler_service import get_scheduler_status
 
 logger = logging.getLogger(__name__)
@@ -56,12 +56,19 @@ def index():
     # Get scheduler status
     scheduler_status = get_scheduler_status()
     
+    # Verificar se automação está ativa
+    automation_active = False
+    automation_settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()
+    if automation_settings and automation_settings.is_active:
+        automation_active = True
+    
     return render_template(
         'dashboard.html',
         stats=stats,
         recent_articles=recent_articles,
         scheduled_articles=scheduled_articles,
-        scheduler_status=scheduler_status
+        scheduler_status=scheduler_status,
+        automation_active=automation_active
     )
 
 @dashboard_bp.route('/articles')

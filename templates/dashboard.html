@@ -110,7 +110,7 @@
                 </div>
             </div>
             
-            <div class="card">
+            <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Ações Rápidas{% else %}Quick Actions{% endif %}</h5>
                 </div>
@@ -135,6 +135,48 @@
                             <a href="{{ url_for('dashboard.article_list') }}?status=scheduled" class="btn btn-outline-primary d-block p-3">
                                 <i class="fas fa-calendar-alt me-2"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Ver Agendados{% else %}View Scheduled{% endif %}
                             </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Automação de Conteúdo -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-robot me-2"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Automação de Conteúdo{% else %}Content Automation{% endif %}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Automatize a criação e publicação de artigos para seu WordPress{% else %}Automate content creation and publishing to your WordPress{% endif %}</p>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{{ url_for('automation.themes_list') }}" class="btn btn-outline-primary d-block p-3">
+                                <i class="fas fa-tags me-2"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Temas & Títulos{% else %}Themes & Titles{% endif %}
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('automation.feeds_list') }}" class="btn btn-outline-primary d-block p-3">
+                                <i class="fas fa-rss me-2"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Feeds RSS{% else %}RSS Feeds{% endif %}
+                            </a>
+                        </div>
+                        <div class="col-12">
+                            <a href="{{ url_for('automation.index') }}" class="btn btn-success d-block p-3">
+                                <i class="fas fa-cogs me-2"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Painel de Automação{% else %}Automation Dashboard{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-2">
+                                <span class="badge bg-{{ 'success' if automation_active else 'secondary' }} p-2">
+                                    <i class="fas fa-{{ 'check' if automation_active else 'pause' }}"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Status: {% if automation_active %}Ativo{% else %}Inativo{% endif %}{% else %}Status: {% if automation_active %}Active{% else %}Inactive{% endif %}{% endif %}</h6>
+                                <small class="text-muted">{% if session.get('language', 'pt_BR') == 'pt_BR' %}{% if automation_active %}Automação em execução{% else %}Configure para começar{% endif %}{% else %}{% if automation_active %}Automation running{% else %}Configure to start{% endif %}{% endif %}</small>
+                            </div>
                         </div>
                     </div>
                 </div>
