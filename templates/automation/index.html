@@ -152,7 +152,7 @@
                 <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Agendamento Manual{% else %}Manual Scheduling{% endif %}</h5>
             </div>
             <div class="card-body">
-                <form id="manualScheduleForm" action="{{ url_for('automation.schedule_automation') }}" method="POST">
+                <form id="manualScheduleForm" action="{{ url_for('automation.schedule') }}" method="POST">
                     <div class="mb-3">
                         <label for="scheduleType" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Tipo de Conteúdo{% else %}Content Type{% endif %}</label>
                         <select class="form-select" id="scheduleType" name="content_type" required>

@@ -529,25 +529,29 @@ def schedule_automation():
     # Validar configurações de publicação
     settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()
     if not settings:
-        return jsonify({'success': False, 'message': 'Configure as opções de automação primeiro'}), 400
+        flash('Configure as opções de automação primeiro antes de agendar artigos.', 'danger')
+        return redirect(url_for('automation.index'))
     
     if not settings.wordpress_config_id:
-        return jsonify({'success': False, 'message': 'Configure um site WordPress para publicação'}), 400
+        flash('Configure um site WordPress para publicação nas configurações de automação.', 'danger')
+        return redirect(url_for('automation.index'))
     
     # Verificar se há temas ou feeds disponíveis
     if schedule_type == 'themes':
         themes = AutomationTheme.query.filter_by(user_id=current_user.id, is_active=True).all()
         if not themes:
-            return jsonify({'success': False, 'message': 'Nenhum tema ativo encontrado'}), 400
+            flash('Nenhum tema ativo encontrado. Por favor, crie pelo menos um tema.', 'danger')
+            return redirect(url_for('automation.index'))
     elif schedule_type == 'rss':
         feeds = RSSFeed.query.filter_by(user_id=current_user.id, is_active=True).all()
         if not feeds:
-            return jsonify({'success': False, 'message': 'Nenhum feed RSS ativo encontrado'}), 400
+            flash('Nenhum feed RSS ativo encontrado. Por favor, adicione pelo menos um feed.', 'danger')
+            return redirect(url_for('automation.index'))
     
     try:
         # Preparar agendamento
         num_articles = int(data.get('num_articles', 5))
-        interval_hours = int(data.get('interval_hours', 6))
+        interval_hours = int(data.get('interval', 6))  # Nome do campo ajustado
         
         # Pegar a data/hora de início
         schedule_date = data.get('schedule_date')
