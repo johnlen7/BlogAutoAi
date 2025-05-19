@@ -479,19 +479,22 @@ def process_news_item(news_item_id):
 @login_required
 def schedule_automation():
     """Agendar geração e publicação automática de artigos"""
-    data = request.json
+    data = request.form  # Usar form data para submissão de formulário HTML
     
     if not data:
-        return jsonify({'success': False, 'message': 'Dados incompletos'}), 400
+        flash('Dados incompletos. Por favor preencha todos os campos.', 'danger')
+        return redirect(url_for('automation.index'))
     
     # Verificar dados necessários
-    schedule_type = data.get('schedule_type')
+    schedule_type = data.get('scheduleType')
     if not schedule_type or schedule_type not in ['themes', 'rss']:
-        return jsonify({'success': False, 'message': 'Tipo de agendamento inválido'}), 400
+        flash('Tipo de agendamento inválido. Escolha temas ou feeds RSS.', 'danger')
+        return redirect(url_for('automation.index'))
     
-    ai_model = data.get('ai_model')
+    ai_model = data.get('aiModel')
     if not ai_model or ai_model not in ['claude', 'gpt']:
-        return jsonify({'success': False, 'message': 'Modelo de IA inválido'}), 400
+        flash('Modelo de IA inválido. Escolha Claude ou GPT.', 'danger')
+        return redirect(url_for('automation.index'))
     
     # Validar configurações de publicação
     settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()
