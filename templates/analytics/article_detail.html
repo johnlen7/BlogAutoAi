@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+
+{% block title %}Análise de Artigo - {{ article.title }}{% endblock %}
+
+{% block page_title %}Análise Detalhada de Artigo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Cabeçalho do Artigo -->
+    <div class="col-md-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <a href="{{ url_for('analytics.index') }}" class="btn btn-outline-secondary me-3">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    
+                    <div>
+                        <h4 class="mb-0">{{ article.title }}</h4>
+                        <div class="text-muted small">
+                            <span class="me-3"><i class="far fa-calendar-alt me-1"></i> {{ article.created_at.strftime('%d/%m/%Y') }}</span>
+                            <span class="me-3"><i class="far fa-user me-1"></i> {{ article.author.username }}</span>
+                            <span class="badge 
+                                {% if article.status.value == 'published' %}bg-success
+                                {% elif article.status.value == 'scheduled' %}bg-warning
+                                {% elif article.status.value == 'draft' %}bg-secondary
+                                {% else %}bg-danger{% endif %}">
+                                {{ article.status.value | capitalize }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="ms-auto">
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="actionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog me-1"></i> Ações
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="actionDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('dashboard.article_detail', article_id=article.id) }}"><i class="fas fa-eye me-2"></i> Ver artigo</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('article.edit', article_id=article.id) }}"><i class="fas fa-edit me-2"></i> Editar artigo</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('analytics.seo_analysis', article_id=article.id) }}"><i class="fas fa-search me-2"></i> Análise SEO</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#updateMetricsModal"><i class="fas fa-chart-bar me-2"></i> Atualizar métricas</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if article.wordpress_post_id and article.wordpress_config %}
+                <div class="alert alert-info d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fab fa-wordpress fa-2x"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0">Publicado no WordPress: <a href="{{ article.wordpress_config.site_url }}/?p={{ article.wordpress_post_id }}" target="_blank" class="alert-link">Ver no site <i class="fas fa-external-link-alt ms-1"></i></a></p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cartões de Métricas -->
+    <div class="col-md-12 mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-eye text-primary fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Visualizações</h6>
+                                <h3 class="mb-0">{{ metrics.page_views }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-users text-success fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Visitantes Únicos</h6>
+                                <h3 class="mb-0">{{ metrics.unique_visitors }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-clock text-info fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Tempo Médio (seg)</h6>
+                                <h3 class="mb-0">{{ metrics.avg_time_on_page | round(1) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-share-alt text-warning fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Compartilhamentos</h6>
+                                <h3 class="mb-0">{{ metrics.social_shares }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico de Visualizações -->
+    <div class="col-md-8 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Desempenho de Visualizações</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="viewsChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pontuação de Qualidade -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Pontuação de Qualidade</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    {% set quality_score = 0 %}
+                    {% if metrics.quality_score %}
+                        {% if metrics.quality_score.value == 'low' %}
+                            {% set quality_score = 25 %}
+                            {% set quality_color = '#6c757d' %}
+                        {% elif metrics.quality_score.value == 'medium' %}
+                            {% set quality_score = 50 %}
+                            {% set quality_color = '#ffc107' %}
+                        {% elif metrics.quality_score.value == 'high' %}
+                            {% set quality_score = 75 %}
+                            {% set quality_color = '#0dcaf0' %}
+                        {% elif metrics.quality_score.value == 'excellent' %}
+                            {% set quality_score = 100 %}
+                            {% set quality_color = '#198754' %}
+                        {% endif %}
+                    {% endif %}
+                    
+                    <div class="position-relative d-inline-block">
+                        <canvas id="qualityChart" width="180" height="180"></canvas>
+                        <div class="position-absolute top-50 start-50 translate-middle text-center">
+                            <h2 class="mb-0">{{ quality_score }}</h2>
+                            <p class="mb-0 small">/ 100</p>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-3 mb-0" style="color: {{ quality_color }}">
+                        {% if metrics.quality_score %}
+                            {{ metrics.quality_score.value | capitalize }}
+                        {% else %}
+                            Não avaliado
+                        {% endif %}
+                    </h5>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small">SEO Score</span>
+                        <span class="small text-muted">{{ metrics.seo_score or 0 }}/100</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ metrics.seo_score or 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small">Legibilidade</span>
+                        <span class="small text-muted">{{ metrics.readability_score or 0 }}/100</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ metrics.readability_score or 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small">Densidade de Palavras-chave</span>
+                        <span class="small text-muted">{{ (metrics.keyword_density or 0) | round(1) }}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        {% set density_percent = (metrics.keyword_density or 0) * 30 %}
+                        {% set density_color = 'bg-success' %}
+                        {% if metrics.keyword_density and (metrics.keyword_density < 0.5 or metrics.keyword_density > 2.5) %}
+                            {% set density_color = 'bg-warning' %}
+                        {% endif %}
+                        <div class="progress-bar {{ density_color }}" role="progressbar" style="width: {{ density_percent }}%"></div>
+                    </div>
+                    <div class="text-end mt-1">
+                        <span class="small text-muted">Meta: 0.5% - 2.5%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Engajamento nas Redes Sociais -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Distribuição em Redes Sociais</h5>
+            </div>
+            <div class="card-body">
+                {% if social_distributions %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Plataforma</th>
+                                <th>Impressões</th>
+                                <th>Engajamento</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dist in social_distributions %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">
+                                            {% if dist.platform == 'facebook' %}
+                                            <i class="fab fa-facebook text-primary fa-lg"></i>
+                                            {% elif dist.platform == 'twitter' %}
+                                            <i class="fab fa-twitter text-info fa-lg"></i>
+                                            {% elif dist.platform == 'linkedin' %}
+                                            <i class="fab fa-linkedin text-primary fa-lg"></i>
+                                            {% elif dist.platform == 'newsletter' %}
+                                            <i class="fas fa-envelope text-warning fa-lg"></i>
+                                            {% else %}
+                                            <i class="fas fa-share-alt text-secondary fa-lg"></i>
+                                            {% endif %}
+                                        </span>
+                                        <span>{{ dist.platform | capitalize }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ dist.impressions }}</td>
+                                <td>{{ dist.engagements }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if dist.status == 'published' %}bg-success
+                                        {% elif dist.status == 'pending' %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ dist.status | capitalize }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-share-alt text-muted mb-3" style="font-size: 3rem;"></i>
+                    <p class="mb-2">Este artigo ainda não foi distribuído nas redes sociais</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#socialShareModal">
+                        <i class="fas fa-share-alt me-2"></i> Compartilhar agora
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sugestões de Melhoria -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Sugestões de Melhoria</h5>
+            </div>
+            <div class="card-body">
+                {% if improvement_suggestions %}
+                <div class="list-group">
+                    {% for suggestion in improvement_suggestions %}
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                {% if suggestion.type == 'content' %}
+                                <span class="icon-circle bg-primary">
+                                    <i class="fas fa-file-alt text-white"></i>
+                                </span>
+                                {% elif suggestion.type == 'seo' %}
+                                <span class="icon-circle bg-success">
+                                    <i class="fas fa-search text-white"></i>
+                                </span>
+                                {% elif suggestion.type == 'engagement' %}
+                                <span class="icon-circle bg-info">
+                                    <i class="fas fa-users text-white"></i>
+                                </span>
+                                {% elif suggestion.type == 'media' %}
+                                <span class="icon-circle bg-warning">
+                                    <i class="fas fa-image text-white"></i>
+                                </span>
+                                {% else %}
+                                <span class="icon-circle bg-secondary">
+                                    <i class="fas fa-lightbulb text-white"></i>
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ suggestion.title }}</h6>
+                                <p class="mb-0 small text-muted">{{ suggestion.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle text-success mb-3" style="font-size: 3rem;"></i>
+                    <p>Seu artigo está em bom estado! Não há sugestões específicas de melhoria no momento.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Atualização de Métricas -->
+<div class="modal fade" id="updateMetricsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Atualizar Métricas Manualmente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('analytics.update_metrics', article_id=article.id) }}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="page_views" class="form-label">Visualizações de Página</label>
+                        <input type="number" class="form-control" id="page_views" name="page_views" value="{{ metrics.page_views }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="unique_visitors" class="form-label">Visitantes Únicos</label>
+                        <input type="number" class="form-control" id="unique_visitors" name="unique_visitors" value="{{ metrics.unique_visitors }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="avg_time_on_page" class="form-label">Tempo Médio na Página (segundos)</label>
+                        <input type="number" step="0.1" class="form-control" id="avg_time_on_page" name="avg_time_on_page" value="{{ metrics.avg_time_on_page }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="social_shares" class="form-label">Compartilhamentos em Redes Sociais</label>
+                        <input type="number" class="form-control" id="social_shares" name="social_shares" value="{{ metrics.social_shares }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="comments" class="form-label">Comentários</label>
+                        <input type="number" class="form-control" id="comments" name="comments" value="{{ metrics.comments }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="likes" class="form-label">Curtidas</label>
+                        <input type="number" class="form-control" id="likes" name="likes" value="{{ metrics.likes }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Atualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Compartilhamento Social -->
+<div class="modal fade" id="socialShareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Compartilhar nas Redes Sociais</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i> Esta funcionalidade será implementada em breve.
+                </div>
+                <div class="d-flex justify-content-center gap-3 mb-4">
+                    <button class="btn btn-outline-primary btn-lg">
+                        <i class="fab fa-facebook fa-lg"></i>
+                    </button>
+                    <button class="btn btn-outline-info btn-lg">
+                        <i class="fab fa-twitter fa-lg"></i>
+                    </button>
+                    <button class="btn btn-outline-primary btn-lg">
+                        <i class="fab fa-linkedin fa-lg"></i>
+                    </button>
+                    <button class="btn btn-outline-warning btn-lg">
+                        <i class="fas fa-envelope fa-lg"></i>
+                    </button>
+                </div>
+                
+                <div class="form-floating mb-3">
+                    <textarea class="form-control" placeholder="Mensagem para compartilhamento" id="shareMessage" style="height: 100px">Confira este artigo: {{ article.title }} {{ url_for('dashboard.article_detail', article_id=article.id, _external=True) }}</textarea>
+                    <label for="shareMessage">Mensagem para compartilhamento</label>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Opções de agendamento</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="scheduleShare">
+                        <label class="form-check-label" for="scheduleShare">
+                            Agendar para envio posterior
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="row mt-3 d-none" id="scheduleOptions">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="scheduleDate" class="form-label">Data</label>
+                            <input type="date" class="form-control" id="scheduleDate">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="scheduleTime" class="form-label">Hora</label>
+                            <input type="time" class="form-control" id="scheduleTime">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary">Compartilhar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.icon-circle {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Carregando dados de visualizações diárias
+    var dateViews = {{ date_views|safe }};
+    
+    // Chart.js - Gráfico de Visualizações
+    var ctxViews = document.getElementById('viewsChart').getContext('2d');
+    var viewsChart = new Chart(ctxViews, {
+        type: 'line',
+        data: {
+            labels: dateViews.dates,
+            datasets: [{
+                label: 'Visualizações',
+                data: dateViews.views,
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#0d6efd',
+                pointRadius: 4,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    padding: 10,
+                    cornerRadius: 4
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        precision: 0
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    
+    // Chart.js - Gráfico de Qualidade
+    var ctxQuality = document.getElementById('qualityChart').getContext('2d');
+    var qualityChart = new Chart(ctxQuality, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [{{ quality_score }}, 100 - {{ quality_score }}],
+                backgroundColor: [
+                    '{{ quality_color }}',
+                    '#f0f0f0'
+                ],
+                borderWidth: 0,
+                cutout: '75%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    enabled: false
+                },
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    //Toggling do Agendamento de Compartilhamento
+    const scheduleShare = document.getElementById('scheduleShare');
+    const scheduleOptions = document.getElementById('scheduleOptions');
+    
+    if (scheduleShare && scheduleOptions) {
+        scheduleShare.addEventListener('change', function() {
+            if (this.checked) {
+                scheduleOptions.classList.remove('d-none');
+            } else {
+                scheduleOptions.classList.add('d-none');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}Análise SEO - {{ article.title }}{% endblock %}
+
+{% block page_title %}Análise SEO Detalhada{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Cabeçalho do Artigo -->
+    <div class="col-md-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <a href="{{ url_for('analytics.article_detail', article_id=article.id) }}" class="btn btn-outline-secondary me-3">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    
+                    <div>
+                        <h4 class="mb-0">{{ article.title }}</h4>
+                        <div class="text-muted small">
+                            <span class="me-3"><i class="far fa-calendar-alt me-1"></i> {{ article.created_at.strftime('%d/%m/%Y') }}</span>
+                            <span class="badge 
+                                {% if article.status.value == 'published' %}bg-success
+                                {% elif article.status.value == 'scheduled' %}bg-warning
+                                {% elif article.status.value == 'draft' %}bg-secondary
+                                {% else %}bg-danger{% endif %}">
+                                {{ article.status.value | capitalize }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="ms-auto">
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="actionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog me-1"></i> Ações
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="actionDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('dashboard.article_detail', article_id=article.id) }}"><i class="fas fa-eye me-2"></i> Ver artigo</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('article.edit', article_id=article.id) }}"><i class="fas fa-edit me-2"></i> Editar artigo</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('analytics.article_detail', article_id=article.id) }}"><i class="fas fa-chart-line me-2"></i> Análise de métricas</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pontuação SEO Geral -->
+    <div class="col-md-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 border-end">
+                        <div class="text-center py-4">
+                            {% if seo_evaluation.status == 'excellent' %}
+                                {% set status_color = '#198754' %}
+                                {% set status_icon = 'fas fa-award' %}
+                            {% elif seo_evaluation.status == 'good' %}
+                                {% set status_color = '#0dcaf0' %}
+                                {% set status_icon = 'fas fa-thumbs-up' %}
+                            {% elif seo_evaluation.status == 'average' %}
+                                {% set status_color = '#ffc107' %}
+                                {% set status_icon = 'fas fa-exclamation-circle' %}
+                            {% else %}
+                                {% set status_color = '#dc3545' %}
+                                {% set status_icon = 'fas fa-exclamation-triangle' %}
+                            {% endif %}
+                            
+                            <div class="d-inline-block position-relative mb-4">
+                                <div class="position-relative" style="width: 150px; height: 150px;">
+                                    <canvas id="seoScoreChart" width="150" height="150"></canvas>
+                                    <div class="position-absolute top-50 start-50 translate-middle text-center">
+                                        <h2 class="mb-0">{{ seo_evaluation.score }}</h2>
+                                        <p class="mb-0 small">/ {{ seo_evaluation.max_score }}</p>
+                                    </div>
+                                </div>
+                                <span class="position-absolute bottom-0 end-0 translate-middle badge rounded-circle p-3" style="background-color: {{ status_color }}">
+                                    <i class="{{ status_icon }} fa-lg"></i>
+                                </span>
+                            </div>
+                            
+                            <h3 class="h4 mb-1" style="color: {{ status_color }}">Pontuação {{ seo_evaluation.grade }}</h3>
+                            <p class="text-muted">{{ seo_evaluation.status | capitalize }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <h5 class="mb-3">Avaliação Detalhada</h5>
+                        
+                        {% for category, data in seo_evaluation.evaluation.items() %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0 text-capitalize">{{ category | replace('_', ' ') }}</h6>
+                                <span class="badge {% if data.score/data.max >= 0.7 %}bg-success{% elif data.score/data.max >= 0.4 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ data.score }}/{{ data.max }}
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar {% if data.score/data.max >= 0.7 %}bg-success{% elif data.score/data.max >= 0.4 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ (data.score/data.max)*100 }}%"></div>
+                            </div>
+                            <p class="small text-muted mt-1 mb-0">{{ data.feedback }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Análise de Palavras-chave -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Análise de Palavras-chave</h5>
+            </div>
+            <div class="card-body">
+                {% if keyword_analysis.main_keyword %}
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Palavra-chave Principal</h6>
+                        <span class="badge 
+                            {% if keyword_analysis.status == 'optimal' %}bg-success
+                            {% elif keyword_analysis.status == 'low' %}bg-warning
+                            {% elif keyword_analysis.status == 'high' %}bg-danger
+                            {% else %}bg-secondary{% endif %}">
+                            {{ keyword_analysis.density }}%
+                        </span>
+                    </div>
+                    
+                    <div class="alert 
+                        {% if keyword_analysis.status == 'optimal' %}alert-success
+                        {% elif keyword_analysis.status == 'low' %}alert-warning
+                        {% elif keyword_analysis.status == 'high' %}alert-danger
+                        {% else %}alert-secondary{% endif %} d-flex align-items-center">
+                        <div class="me-3">
+                            {% if keyword_analysis.status == 'optimal' %}
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            {% elif keyword_analysis.status == 'low' %}
+                                <i class="fas fa-exclamation-circle fa-2x"></i>
+                            {% elif keyword_analysis.status == 'high' %}
+                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle fa-2x"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <p class="mb-0"><strong>"{{ keyword_analysis.main_keyword }}"</strong>
+                            {% if keyword_analysis.status == 'optimal' %}
+                                tem densidade ideal ({{ keyword_analysis.density }}%).
+                            {% elif keyword_analysis.status == 'low' %}
+                                tem densidade baixa ({{ keyword_analysis.density }}%). Recomendado: 0.5% - 2.5%.
+                            {% elif keyword_analysis.status == 'high' %}
+                                tem densidade alta ({{ keyword_analysis.density }}%). Recomendado: 0.5% - 2.5%.
+                            {% else %}
+                                ({{ keyword_analysis.density }}%).
+                            {% endif %}
+                            </p>
+                            <p class="mb-0 small">Ocorrências: {{ keyword_analysis.occurrences }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if keyword_analysis.secondary_keywords %}
+                <h6 class="mb-3">Palavras-chave Secundárias</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Palavra-chave</th>
+                                <th class="text-center">Ocorrências</th>
+                                <th class="text-center">Densidade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for kw in keyword_analysis.secondary_keywords %}
+                            <tr>
+                                <td>{{ kw.keyword }}</td>
+                                <td class="text-center">{{ kw.occurrences }}</td>
+                                <td class="text-center">
+                                    <span class="badge 
+                                        {% if kw.density >= 0.5 and kw.density <= 2.5 %}bg-success
+                                        {% elif kw.density < 0.5 %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ kw.density }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-key text-muted mb-3" style="font-size: 3rem;"></i>
+                    <p class="mb-2">Não foi encontrada uma palavra-chave principal para análise</p>
+                    <a href="{{ url_for('article.edit', article_id=article.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i> Adicionar palavra-chave
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sugestões de Links Internos -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Sugestões de Links Internos</h5>
+            </div>
+            <div class="card-body">
+                {% if internal_link_suggestions %}
+                <p class="text-muted mb-3">Adicionar links para estes artigos relacionados para melhorar seu SEO:</p>
+                <div class="list-group">
+                    {% for suggestion in internal_link_suggestions %}
+                    <a href="{{ suggestion.url }}" class="list-group-item list-group-item-action" target="_blank">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">{{ suggestion.title }}</h6>
+                            <span class="badge bg-primary rounded-pill">{{ suggestion.relevance_score }} pts</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-link text-muted mb-3" style="font-size: 3rem;"></i>
+                    <p class="mb-2">Nenhuma sugestão de link interno encontrada</p>
+                    <p class="text-muted">Publique mais artigos relacionados para gerar sugestões</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Verificação de Elementos On-Page -->
+    <div class="col-md-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Verificação de Elementos On-Page</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Elemento</th>
+                                <th>Status</th>
+                                <th>Recomendação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Título -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-primary me-2"><i class="fas fa-heading"></i></span>
+                                        <div>
+                                            <strong>Título</strong>
+                                            <p class="mb-0 small text-muted">{{ article.title }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% set title_len = article.title|length %}
+                                    {% if title_len >= 30 and title_len <= 60 %}
+                                    <span class="badge bg-success">Ótimo</span>
+                                    {% elif title_len < 30 %}
+                                    <span class="badge bg-warning">Muito curto</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Muito longo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if title_len >= 30 and title_len <= 60 %}
+                                    <p class="mb-0 small">O comprimento do título está bom ({{ title_len }} caracteres)</p>
+                                    {% elif title_len < 30 %}
+                                    <p class="mb-0 small">O título é muito curto ({{ title_len }} caracteres). Ideal: 30-60 caracteres.</p>
+                                    {% else %}
+                                    <p class="mb-0 small">O título é muito longo ({{ title_len }} caracteres). Ideal: 30-60 caracteres.</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            
+                            <!-- Meta Descrição -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-info me-2"><i class="fas fa-align-left"></i></span>
+                                        <div>
+                                            <strong>Meta Descrição</strong>
+                                            <p class="mb-0 small text-muted">
+                                                {% if article.meta_description %}
+                                                {{ article.meta_description }}
+                                                {% else %}
+                                                <em>Não definida</em>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if article.meta_description %}
+                                        {% set meta_len = article.meta_description|length %}
+                                        {% if meta_len >= 120 and meta_len <= 156 %}
+                                        <span class="badge bg-success">Ótima</span>
+                                        {% elif meta_len < 120 %}
+                                        <span class="badge bg-warning">Muito curta</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Muito longa</span>
+                                        {% endif %}
+                                    {% else %}
+                                    <span class="badge bg-danger">Ausente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if article.meta_description %}
+                                        {% set meta_len = article.meta_description|length %}
+                                        {% if meta_len >= 120 and meta_len <= 156 %}
+                                        <p class="mb-0 small">Comprimento ideal ({{ meta_len }} caracteres)</p>
+                                        {% elif meta_len < 120 %}
+                                        <p class="mb-0 small">A descrição é muito curta ({{ meta_len }} caracteres). Ideal: 120-156 caracteres.</p>
+                                        {% else %}
+                                        <p class="mb-0 small">A descrição é muito longa ({{ meta_len }} caracteres). Ideal: 120-156 caracteres.</p>
+                                        {% endif %}
+                                    {% else %}
+                                    <p class="mb-0 small">Adicione uma meta descrição para melhorar CTR e SEO.</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            
+                            <!-- URL / Slug -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-warning me-2"><i class="fas fa-link"></i></span>
+                                        <div>
+                                            <strong>URL / Slug</strong>
+                                            <p class="mb-0 small text-muted">
+                                                {% if article.slug %}
+                                                {{ article.slug }}
+                                                {% else %}
+                                                <em>Não definido</em>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if article.slug %}
+                                        {% if article.focus_keyword and article.focus_keyword.lower() in article.slug.lower() %}
+                                        <span class="badge bg-success">Ótimo</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Melhorável</span>
+                                        {% endif %}
+                                    {% else %}
+                                    <span class="badge bg-danger">Ausente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if article.slug %}
+                                        {% if article.focus_keyword and article.focus_keyword.lower() in article.slug.lower() %}
+                                        <p class="mb-0 small">O slug contém a palavra-chave principal.</p>
+                                        {% else %}
+                                        <p class="mb-0 small">Adicione a palavra-chave principal ao slug.</p>
+                                        {% endif %}
+                                    {% else %}
+                                    <p class="mb-0 small">Defina um slug otimizado com palavras-chave.</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            
+                            <!-- Imagem Destacada -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-success me-2"><i class="fas fa-image"></i></span>
+                                        <div>
+                                            <strong>Imagem Destacada</strong>
+                                            <p class="mb-0 small text-muted">
+                                                {% if article.featured_image_url %}
+                                                <a href="{{ article.featured_image_url }}" target="_blank">Ver imagem</a>
+                                                {% else %}
+                                                <em>Não definida</em>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if article.featured_image_url %}
+                                    <span class="badge bg-success">Presente</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Ausente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if article.featured_image_url %}
+                                    <p class="mb-0 small">Verifique se a imagem tem alt text otimizado.</p>
+                                    {% else %}
+                                    <p class="mb-0 small">Adicione uma imagem destacada para aumentar engajamento e CTR.</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            
+                            <!-- Estrutura de Títulos -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-secondary me-2"><i class="fas fa-list"></i></span>
+                                        <div>
+                                            <strong>Estrutura de Títulos</strong>
+                                            <p class="mb-0 small text-muted">H1, H2, H3, etc.</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if article.internal_links_count > 0 %}
+                                    <span class="badge bg-success">Bom</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Verificar</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <p class="mb-0 small">Use estrutura hierárquica de títulos (H2, H3) para melhorar legibilidade e SEO.</p>
+                                </td>
+                            </tr>
+                            
+                            <!-- Links Internos -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-dark me-2"><i class="fas fa-project-diagram"></i></span>
+                                        <div>
+                                            <strong>Links Internos</strong>
+                                            <p class="mb-0 small text-muted">{{ article.internal_links_count or 0 }} links</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if article.internal_links_count and article.internal_links_count >= 3 %}
+                                    <span class="badge bg-success">Bom</span>
+                                    {% elif article.internal_links_count and article.internal_links_count > 0 %}
+                                    <span class="badge bg-warning">Melhorável</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Ausente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if article.internal_links_count and article.internal_links_count >= 3 %}
+                                    <p class="mb-0 small">Bom número de links internos ({{ article.internal_links_count }}).</p>
+                                    {% elif article.internal_links_count and article.internal_links_count > 0 %}
+                                    <p class="mb-0 small">Adicione mais links internos (recomendado: 3+).</p>
+                                    {% else %}
+                                    <p class="mb-0 small">Adicione links para outros artigos do seu site.</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            
+                            <!-- Links Externos -->
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-dark me-2"><i class="fas fa-external-link-alt"></i></span>
+                                        <div>
+                                            <strong>Links Externos</strong>
+                                            <p class="mb-0 small text-muted">{{ article.external_links_count or 0 }} links</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if article.external_links_count and article.external_links_count >= 2 %}
+                                    <span class="badge bg-success">Bom</span>
+                                    {% elif article.external_links_count and article.external_links_count > 0 %}
+                                    <span class="badge bg-warning">Melhorável</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Ausente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if article.external_links_count and article.external_links_count >= 2 %}
+                                    <p class="mb-0 small">Bom número de links externos ({{ article.external_links_count }}).</p>
+                                    {% elif article.external_links_count and article.external_links_count > 0 %}
+                                    <p class="mb-0 small">Adicione mais links para sites autoritativos.</p>
+                                    {% else %}
+                                    <p class="mb-0 small">Adicione links para fontes externas para aumentar credibilidade.</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // SEO Score Chart
+    var ctxSEO = document.getElementById('seoScoreChart').getContext('2d');
+    
+    var seoScoreChart = new Chart(ctxSEO, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [{{ seo_evaluation.score }}, {{ seo_evaluation.max_score - seo_evaluation.score }}],
+                backgroundColor: [
+                    '{{ status_color }}',
+                    '#f0f0f0'
+                ],
+                borderWidth: 0,
+                cutout: '75%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    enabled: false
+                },
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

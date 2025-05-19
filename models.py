@@ -77,6 +77,17 @@ class RepeatSchedule(enum.Enum):
     MONTHLY = "monthly"
 
 
+class ContentTone(enum.Enum):
+    FORMAL = "formal"
+    FRIENDLY = "friendly"
+    ENTHUSIASTIC = "enthusiastic"
+    NEUTRAL = "neutral"
+    HUMOROUS = "humorous"
+    AUTHORITATIVE = "authoritative"
+    CASUAL = "casual"
+    INSPIRATIONAL = "inspirational"
+
+
 class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(256), nullable=False)
@@ -102,6 +113,21 @@ class Article(db.Model):
     is_automated = db.Column(db.Boolean, default=False)  # Flag para artigos gerados automaticamente
     word_count = db.Column(db.Integer)  # Contagem de palavras do artigo
     
+    # Content customization
+    content_tone = db.Column(db.Enum(ContentTone), default=ContentTone.NEUTRAL)
+    target_audience = db.Column(db.String(128))  # Target audience description
+    
+    # Content quality fields
+    has_infographic = db.Column(db.Boolean, default=False)
+    has_custom_images = db.Column(db.Boolean, default=False)
+    plagiarism_score = db.Column(db.Float, default=0.0)  # 0-100, lower is better
+    
+    # SEO fields
+    focus_keyword = db.Column(db.String(128))
+    secondary_keywords = db.Column(db.String(512))
+    internal_links_count = db.Column(db.Integer, default=0)
+    external_links_count = db.Column(db.Integer, default=0)
+    
     # Relações para automação
     theme_id = db.Column(db.Integer, db.ForeignKey('automation_theme.id'), nullable=True)
     news_item_id = db.Column(db.Integer, db.ForeignKey('news_item.id'), nullable=True)
@@ -111,14 +137,18 @@ class Article(db.Model):
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     wordpress_config_id = db.Column(db.Integer, db.ForeignKey('word_press_config.id'))
-    theme_id = db.Column(db.Integer, db.ForeignKey('automation_theme.id'), nullable=True)
-    news_item_id = db.Column(db.Integer, db.ForeignKey('news_item.id'), nullable=True)
     
     # Relationship to the WordPress config
     wordpress_config = db.relationship('WordPressConfig')
     
     # Relationship with article logs
     logs = db.relationship('ArticleLog', backref='article', lazy=True)
+    
+    # Relationship with metrics
+    metrics = db.relationship('ArticleMetrics', backref='article', lazy=True, uselist=False)
+    
+    # Relationship with social distribution
+    distributions = db.relationship('ContentDistribution', backref='article', lazy=True)
     
     def __repr__(self):
         return f'<Article {self.title}>'
@@ -229,3 +259,114 @@ class AutomationSettings(db.Model):
     
     def __repr__(self):
         return f'<AutomationSettings user_id={self.user_id}>'
+
+
+class ContentQualityScore(enum.Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    EXCELLENT = "excellent"
+
+
+class ArticleMetrics(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Engagement metrics
+    page_views = db.Column(db.Integer, default=0)
+    unique_visitors = db.Column(db.Integer, default=0)
+    avg_time_on_page = db.Column(db.Float, default=0.0)  # in seconds
+    bounce_rate = db.Column(db.Float, default=0.0)  # percentage
+    
+    # Social metrics
+    social_shares = db.Column(db.Integer, default=0)
+    comments = db.Column(db.Integer, default=0)
+    likes = db.Column(db.Integer, default=0)
+    
+    # SEO metrics
+    serp_position = db.Column(db.Integer, default=0)
+    keyword_ranking = db.Column(db.Integer, default=0)
+    backlinks = db.Column(db.Integer, default=0)
+    
+    # Content quality metrics
+    quality_score = db.Column(db.Enum(ContentQualityScore), default=ContentQualityScore.MEDIUM)
+    seo_score = db.Column(db.Integer, default=0)  # 0-100
+    readability_score = db.Column(db.Integer, default=0)  # 0-100
+    keyword_density = db.Column(db.Float, default=0.0)  # percentage
+    
+    # Revenue metrics
+    ad_impressions = db.Column(db.Integer, default=0)
+    ad_clicks = db.Column(db.Integer, default=0)
+    revenue = db.Column(db.Float, default=0.0)
+    
+    # Timestamps
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Foreign keys
+    article_id = db.Column(db.Integer, db.ForeignKey('article.id'), nullable=False)
+    
+    def __repr__(self):
+        return f'<ArticleMetrics article_id={self.article_id}>'
+
+
+class ContentDistribution(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    
+    platform = db.Column(db.String(64), nullable=False)  # facebook, twitter, linkedin, newsletter
+    post_url = db.Column(db.String(512))
+    scheduled_date = db.Column(db.DateTime)
+    published_date = db.Column(db.DateTime)
+    status = db.Column(db.String(20), default="pending")  # pending, published, failed
+    
+    # Engagement metrics
+    impressions = db.Column(db.Integer, default=0)
+    engagements = db.Column(db.Integer, default=0)
+    clicks = db.Column(db.Integer, default=0)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Foreign keys
+    article_id = db.Column(db.Integer, db.ForeignKey('article.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    def __repr__(self):
+        return f'<ContentDistribution platform={self.platform}, article_id={self.article_id}>'
+
+
+class SocialMediaAccount(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    
+    platform = db.Column(db.String(64), nullable=False)  # facebook, twitter, linkedin
+    account_name = db.Column(db.String(128), nullable=False)
+    access_token = db.Column(db.String(512))
+    refresh_token = db.Column(db.String(512))
+    token_expires_at = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Foreign keys
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    def __repr__(self):
+        return f'<SocialMediaAccount platform={self.platform}, account={self.account_name}>'
+
+
+class UserPreferences(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    
+    theme = db.Column(db.String(20), default="light")  # light, dark, auto
+    language = db.Column(db.String(5), default="pt_BR")  # pt_BR, en
+    email_notifications = db.Column(db.Boolean, default=True)
+    weekly_reports = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Foreign keys
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    def __repr__(self):
+        return f'<UserPreferences user_id={self.user_id}>'

@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %}Análise de Desempenho - BlogAuto AI{% endblock %}
+
+{% block page_title %}Análise e Insights de Conteúdo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Cartões de Estatísticas -->
+    <div class="col-md-12 mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-newspaper text-primary fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Total de Artigos</h6>
+                                <h3 class="mb-0">{{ total_articles }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-check-circle text-success fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Artigos Publicados</h6>
+                                <h3 class="mb-0">{{ published_articles }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-eye text-info fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Total de Visualizações</h6>
+                                <h3 class="mb-0">{{ total_views }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-star text-warning fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Pontuação Média</h6>
+                                <h3 class="mb-0">{{ avg_quality }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico Principal de Desempenho -->
+    <div class="col-md-8 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Desempenho dos Últimos 7 Dias</h5>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-primary active" data-chart-period="7days">7 dias</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-chart-period="30days">30 dias</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Distribuição de Qualidade -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Distribuição de Qualidade</h5>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="qualityChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Melhores Artigos -->
+    <div class="col-md-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Top Artigos por Visualizações</h5>
+                <a href="{{ url_for('analytics.performance_report') }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-file-alt me-1"></i> Relatório Completo
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Artigo</th>
+                                <th scope="col">Data de Publicação</th>
+                                <th scope="col">Visualizações</th>
+                                <th scope="col">Engajamento</th>
+                                <th scope="col">Qualidade</th>
+                                <th scope="col">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for article in top_articles %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if article.featured_image_url %}
+                                        <img src="{{ article.featured_image_url }}" alt="Thumbnail" class="rounded me-3" width="48" height="48" style="object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                            <i class="fas fa-newspaper text-secondary"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0">{{ article.title }}</h6>
+                                            <small class="text-muted">{{ article.word_count or 0 }} palavras</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ article.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-primary rounded-pill me-2">{{ article.metrics.page_views }}</span>
+                                        <div class="progress flex-grow-1" style="height: 5px;">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ (article.metrics.page_views / top_articles[0].metrics.page_views * 100) if top_articles[0].metrics.page_views > 0 else 0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% set engagement = (article.metrics.social_shares + article.metrics.comments + article.metrics.likes) %}
+                                    <span class="badge bg-info rounded-pill">{{ engagement }}</span>
+                                </td>
+                                <td>
+                                    {% if article.metrics.quality_score %}
+                                    <span class="badge rounded-pill 
+                                        {% if article.metrics.quality_score.value == 'excellent' %}bg-success
+                                        {% elif article.metrics.quality_score.value == 'high' %}bg-info
+                                        {% elif article.metrics.quality_score.value == 'medium' %}bg-warning
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ article.metrics.quality_score.value | capitalize }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary rounded-pill">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('analytics.article_detail', article_id=article.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-chart-line"></i>
+                                        </a>
+                                        <a href="{{ url_for('analytics.seo_analysis', article_id=article.id) }}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-search"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="fas fa-chart-bar text-muted mb-3" style="font-size: 3rem;"></i>
+                                    <p class="mb-0">Ainda não há métricas de desempenho para seus artigos</p>
+                                    <p class="text-muted">Publique conteúdo para começar a acompanhar as métricas</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Painel de Sugestões de Melhoria -->
+    <div class="col-md-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Insights e Recomendações</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="recommendationsAccordion">
+                    <!-- SEO Recommendations -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingSEO">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSEO" aria-expanded="true" aria-controls="collapseSEO">
+                                <i class="fas fa-search me-2"></i> Melhorias de SEO
+                            </button>
+                        </h2>
+                        <div id="collapseSEO" class="accordion-collapse collapse show" aria-labelledby="headingSEO" data-bs-parent="#recommendationsAccordion">
+                            <div class="accordion-body">
+                                <div class="list-group">
+                                    <a href="#" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Otimize a densidade de palavras-chave</h6>
+                                            <small class="text-primary">Recomendado</small>
+                                        </div>
+                                        <p class="mb-1 small">Mantenha sua palavra-chave principal entre 0.5% e 2.5% do texto total para melhor ranqueamento.</p>
+                                    </a>
+                                    <a href="#" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Adicione mais links internos</h6>
+                                            <small class="text-primary">Importante</small>
+                                        </div>
+                                        <p class="mb-1 small">Crie mais conexões entre seus artigos para melhorar a navegação e o SEO.</p>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Recommendations -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingContent">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseContent" aria-expanded="false" aria-controls="collapseContent">
+                                <i class="fas fa-file-alt me-2"></i> Melhorias de Conteúdo
+                            </button>
+                        </h2>
+                        <div id="collapseContent" class="accordion-collapse collapse" aria-labelledby="headingContent" data-bs-parent="#recommendationsAccordion">
+                            <div class="accordion-body">
+                                <div class="list-group">
+                                    <a href="#" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Aumente o comprimento dos artigos</h6>
+                                            <small class="text-primary">Recomendado</small>
+                                        </div>
+                                        <p class="mb-1 small">Artigos com mais de 1.200 palavras tendem a ter melhor posicionamento nos resultados de busca.</p>
+                                    </a>
+                                    <a href="#" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Adicione elementos visuais</h6>
+                                            <small class="text-primary">Importante</small>
+                                        </div>
+                                        <p class="mb-1 small">Imagens e infográficos aumentam o tempo de permanência e reduzem a taxa de rejeição.</p>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Distribution Recommendations -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingDistribution">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDistribution" aria-expanded="false" aria-controls="collapseDistribution">
+                                <i class="fas fa-share-alt me-2"></i> Estratégias de Distribuição
+                            </button>
+                        </h2>
+                        <div id="collapseDistribution" class="accordion-collapse collapse" aria-labelledby="headingDistribution" data-bs-parent="#recommendationsAccordion">
+                            <div class="accordion-body">
+                                <div class="list-group">
+                                    <a href="#" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Compartilhe em redes sociais</h6>
+                                            <small class="text-primary">Recomendado</small>
+                                        </div>
+                                        <p class="mb-1 small">Aumente o alcance compartilhando seu conteúdo em múltiplas plataformas sociais.</p>
+                                    </a>
+                                    <a href="#" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Configure newsletters</h6>
+                                            <small class="text-primary">Importante</small>
+                                        </div>
+                                        <p class="mb-1 small">Envie resumos semanais do seu conteúdo para sua base de email.</p>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js - Performance Chart
+    var performanceData = {{ performance_data|safe }};
+    var ctxPerformance = document.getElementById('performanceChart').getContext('2d');
+    
+    var performanceChart = new Chart(ctxPerformance, {
+        type: 'line',
+        data: {
+            labels: performanceData.dates,
+            datasets: [
+                {
+                    label: 'Visualizações',
+                    data: performanceData.views,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#0d6efd',
+                    pointRadius: 4,
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Engajamento',
+                    data: performanceData.engagement,
+                    borderColor: '#20c997',
+                    backgroundColor: 'rgba(32, 201, 151, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#20c997',
+                    pointRadius: 4,
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    padding: 10,
+                    cornerRadius: 4,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    }
+                },
+                legend: {
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        boxWidth: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        precision: 0
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    
+    // Chart.js - Quality Distribution Chart
+    var qualityData = {{ quality_distribution|safe }};
+    var ctxQuality = document.getElementById('qualityChart').getContext('2d');
+    
+    var qualityChart = new Chart(ctxQuality, {
+        type: 'doughnut',
+        data: {
+            labels: qualityData.labels,
+            datasets: [{
+                data: qualityData.data,
+                backgroundColor: [
+                    '#6c757d',  // Baixa - cinza
+                    '#ffc107',  // Média - amarelo
+                    '#0dcaf0',  // Alta - azul
+                    '#198754'   // Excelente - verde
+                ],
+                borderWidth: 1,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    padding: 10,
+                    cornerRadius: 4,
+                    callbacks: {
+                        label: function(context) {
+                            var label = context.label || '';
+                            var value = context.raw || 0;
+                            var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            var percentage = Math.round((value / total) * 100);
+                            return label + ': ' + value + ' artigos (' + percentage + '%)';
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+});
+</script>
+{% endblock %}
