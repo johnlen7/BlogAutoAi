@@ -120,10 +120,14 @@
                             <tr>
                                 <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Site WordPress{% else %}WordPress Site{% endif %}</th>
                                 <td>
-                                    {% if automation_settings.wordpress_config %}
-                                    {{ automation_settings.wordpress_config.name }}
+                                    {% if automation_settings.wordpress_config_id %}
+                                        {% for config in wordpress_configs %}
+                                            {% if config.id == automation_settings.wordpress_config_id %}
+                                                {{ config.name }} ({{ config.site_url }})
+                                            {% endif %}
+                                        {% endfor %}
                                     {% else %}
-                                    <span class="text-danger">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Não configurado{% else %}Not configured{% endif %}</span>
+                                        <span class="text-danger">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Não configurado{% else %}Not configured{% endif %}</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -151,7 +155,7 @@
                 <form id="manualScheduleForm" action="{{ url_for('automation.schedule_automation') }}" method="POST">
                     <div class="mb-3">
                         <label for="scheduleType" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Tipo de Conteúdo{% else %}Content Type{% endif %}</label>
-                        <select class="form-select" id="scheduleType" required>
+                        <select class="form-select" id="scheduleType" name="content_type" required>
                             <option value="themes">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Usar Temas{% else %}Use Themes{% endif %}</option>
                             <option value="rss">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Usar Feeds RSS{% else %}Use RSS Feeds{% endif %}</option>
                         </select>
@@ -159,7 +163,7 @@
                     
                     <div class="mb-3">
                         <label for="aiModel" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Modelo de IA{% else %}AI Model{% endif %}</label>
-                        <select class="form-select" id="aiModel" required>
+                        <select class="form-select" id="aiModel" name="ai_model" required>
                             <option value="claude">Claude</option>
                             <option value="gpt">GPT</option>
                         </select>
@@ -167,27 +171,27 @@
                     
                     <div class="mb-3">
                         <label for="scheduleDate" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Data de Início{% else %}Start Date{% endif %}</label>
-                        <input type="date" class="form-control" id="scheduleDate" required>
+                        <input type="date" class="form-control" id="scheduleDate" name="schedule_date" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="scheduleTime" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Horário de Início{% else %}Start Time{% endif %}</label>
-                        <input type="time" class="form-control" id="scheduleTime" required>
+                        <input type="time" class="form-control" id="scheduleTime" name="schedule_time" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="numArticles" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Número de Artigos{% else %}Number of Articles{% endif %}</label>
-                        <input type="number" class="form-control" id="numArticles" min="1" max="50" value="5" required>
+                        <input type="number" class="form-control" id="numArticles" name="num_articles" min="1" max="50" value="5" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="interval" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Intervalo entre Publicações (horas){% else %}Publish Interval (hours){% endif %}</label>
-                        <input type="number" class="form-control" id="interval" min="1" max="168" value="6" required>
+                        <input type="number" class="form-control" id="interval" name="interval" min="1" max="168" value="6" required>
                     </div>
                     
                     <div class="mb-3">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="publishImmediately">
+                            <input class="form-check-input" type="checkbox" id="publishImmediately" name="publish_immediately" value="1">
                             <label class="form-check-label" for="publishImmediately">
                                 {% if session.get('language', 'pt_BR') == 'pt_BR' %}Publicar após gerar{% else %}Publish after generation{% endif %}
                             </label>
