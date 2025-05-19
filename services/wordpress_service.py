@@ -491,7 +491,7 @@ class WordPressService:
             # Prepare post data
             post_data = {
                 "title": article.title,
-                "content": article.content,
+                "content": self._clean_content_formatting(article.content),
                 "status": "future",
                 "date": date_str,
                 "slug": article.slug,
@@ -590,7 +590,7 @@ class WordPressService:
             # Prepare post data
             post_data = {
                 "title": article.title,
-                "content": article.content,
+                "content": self._clean_content_formatting(article.content),
                 "slug": article.slug if article.slug else None,
                 "excerpt": article.meta_description if article.meta_description else '',
             }
