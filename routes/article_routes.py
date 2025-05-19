@@ -148,7 +148,22 @@ def generate_content():
             article = generate_article_from_theme(temp_theme, model_type, current_user.id, None)
             result = {'title': article.title, 'content': article.content}
         else:  # url
-            result = ai_service.generate_article_from_url(content_value, model_type)
+            # Para conteúdo baseado em URL, usamos uma abordagem diferente
+            from services.rss_service import fetch_website_content
+            
+            # Buscar conteúdo da URL
+            title, content = fetch_website_content(content_value)
+            
+            # Criar notícia temporária para geração
+            temp_news = type('TempNews', (), {
+                'title': title or 'Artigo sem título',
+                'content': content or 'Conteúdo não encontrado', 
+                'link': content_value,
+                'id': None
+            })
+            
+            article = generate_article_from_news(temp_news, model_type, current_user.id, None)
+            result = {'title': article.title, 'content': article.content}
         
         return jsonify({
             'success': True,

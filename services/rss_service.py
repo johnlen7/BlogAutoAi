@@ -102,6 +102,54 @@ def fetch_and_process_feed(feed):
         logger.error(f"Erro ao processar feed {feed.name}: {str(e)}")
         raise e
 
+def fetch_website_content(url):
+    """
+    Extrai o conteúdo principal de uma URL
+    
+    Args:
+        url: URL do site para extrair conteúdo
+        
+    Returns:
+        tuple: (título, conteúdo)
+    """
+    try:
+        logger.info(f"Extraindo conteúdo de: {url}")
+        
+        # Usar trafilatura para extrair o conteúdo
+        downloaded = trafilatura.fetch_url(url)
+        
+        if not downloaded:
+            logger.warning(f"Não foi possível buscar a URL: {url}")
+            return None, None
+        
+        # Extrair o título da página (se disponível)
+        title = None
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(downloaded, 'html.parser')
+            title_tag = soup.find('title')
+            if title_tag:
+                title = title_tag.text.strip()
+        except:
+            # Se não conseguir extrair com BeautifulSoup, continuar sem título
+            pass
+        
+        # Extrair o conteúdo principal
+        content = trafilatura.extract(downloaded)
+        
+        if not content:
+            logger.warning(f"Não foi possível extrair conteúdo de: {url}")
+            
+            # Tentar extrair o conteúdo bruto como fallback
+            if title_tag and title_tag.parent:
+                content = h2t.handle(str(title_tag.parent))
+        
+        return title, content
+    
+    except Exception as e:
+        logger.error(f"Erro ao extrair conteúdo de {url}: {str(e)}")
+        return None, None
+
 def fetch_all_feeds():
     """
     Busca e processa todos os feeds RSS ativos
