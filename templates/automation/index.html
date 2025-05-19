@@ -252,7 +252,7 @@
                 <form id="automationSettingsForm" action="{{ url_for('automation.save_automation_settings') }}" method="POST">
                     <div class="mb-3">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="isActive" 
+                            <input class="form-check-input" type="checkbox" id="isActive" name="is_active" value="true"
                                   {% if automation_settings and automation_settings.is_active %}checked{% endif %}>
                             <label class="form-check-label" for="isActive">
                                 {% if session.get('language', 'pt_BR') == 'pt_BR' %}Ativar automação{% else %}Enable automation{% endif %}
@@ -262,17 +262,17 @@
                     
                     <div class="mb-3">
                         <label for="postInterval" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Intervalo entre Postagens (horas){% else %}Post Interval (hours){% endif %}</label>
-                        <input type="number" class="form-control" id="postInterval" min="1" max="168" value="{{ automation_settings.post_interval_hours if automation_settings else 6 }}" required>
+                        <input type="number" class="form-control" id="postInterval" name="post_interval_hours" min="1" max="168" value="{{ automation_settings.post_interval_hours if automation_settings else 6 }}" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="minWordCount" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Contagem Mínima de Palavras{% else %}Minimum Word Count{% endif %}</label>
-                        <input type="number" class="form-control" id="minWordCount" min="100" max="5000" value="{{ automation_settings.min_word_count if automation_settings else 700 }}" required>
+                        <input type="number" class="form-control" id="minWordCount" name="min_word_count" min="100" max="5000" value="{{ automation_settings.min_word_count if automation_settings else 700 }}" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="maxWordCount" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Contagem Máxima de Palavras{% else %}Maximum Word Count{% endif %}</label>
-                        <input type="number" class="form-control" id="maxWordCount" min="100" max="5000" value="{{ automation_settings.max_word_count if automation_settings else 1500 }}" required>
+                        <input type="number" class="form-control" id="maxWordCount" name="max_word_count" min="100" max="5000" value="{{ automation_settings.max_word_count if automation_settings else 1500 }}" required>
                     </div>
                     
                     <div class="mb-3">
