@@ -52,9 +52,66 @@ class WordPressService:
                 return True
             else:
                 logger.warning(f"WordPress connection failed: {response.status_code}")
+                if response.content:
+                    logger.warning(f"Response content: {response.content.decode('utf-8')}")
                 return False
         except Exception as e:
             logger.error(f"WordPress connection error: {str(e)}")
+            return False
+            
+    def test_post_permission(self) -> bool:
+        """
+        Test if the user has permission to create posts
+        
+        Returns:
+            Boolean indicating if user can create posts
+        """
+        logger.info(f"Testing post permissions for user on {self.site_url}")
+        
+        try:
+            # Try to post a draft (will not be published)
+            test_post_data = {
+                "title": "Test Post - Please Ignore",
+                "content": "This is a test post to verify API permissions. It can be safely deleted.",
+                "status": "draft"
+            }
+            
+            # Create test post
+            response = requests.post(
+                f"{self.api_endpoint}/posts",
+                headers=self.auth_header,
+                json=test_post_data,
+                timeout=10
+            )
+            
+            logger.info(f"Post permission test response: {response.status_code}")
+            
+            if response.status_code in (200, 201):
+                # If successful, delete the test post
+                try:
+                    post_data = response.json()
+                    post_id = post_data.get('id')
+                    
+                    if post_id:
+                        delete_response = requests.delete(
+                            f"{self.api_endpoint}/posts/{post_id}",
+                            headers=self.auth_header,
+                            params={"force": True},
+                            timeout=10
+                        )
+                        logger.info(f"Deleted test post: {delete_response.status_code}")
+                except Exception as delete_error:
+                    logger.warning(f"Could not delete test post: {str(delete_error)}")
+                
+                return True
+            else:
+                logger.warning(f"User doesn't have post permission: {response.status_code}")
+                if response.content:
+                    error_content = response.content.decode('utf-8')
+                    logger.warning(f"Response content: {error_content}")
+                return False
+        except Exception as e:
+            logger.error(f"Error testing post permission: {str(e)}")
             return False
     
     def get_categories(self) -> List[Dict[str, Any]]:

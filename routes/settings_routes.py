@@ -189,7 +189,7 @@ def wordpress_config():
 @settings_bp.route('/api/test-wordpress', methods=['POST'])
 @login_required
 def test_wordpress_connection():
-    """API endpoint to test WordPress connection"""
+    """API endpoint to test WordPress connection and publishing permissions"""
     data = request.json
     
     # If testing an existing configuration
@@ -200,7 +200,7 @@ def test_wordpress_connection():
         if not config or config.user_id != current_user.id:
             return jsonify({
                 'success': False,
-                'message': 'Configuration not found or access denied.'
+                'message': 'Configuração não encontrada ou acesso negado.'
             }), 403
     
     # If testing a new configuration
@@ -212,7 +212,7 @@ def test_wordpress_connection():
         if not site_url or not username or not app_password:
             return jsonify({
                 'success': False,
-                'message': 'Site URL, username, and application password are required.'
+                'message': 'URL do site, nome de usuário e senha de aplicativo são obrigatórios.'
             }), 400
         
         # Normalize site URL
@@ -232,26 +232,37 @@ def test_wordpress_connection():
         )
     
     try:
-        # Test connection
+        # Step 1: Test basic authentication
         wp_service = WordPressService(config)
-        success = wp_service.validate_connection()
+        auth_success = wp_service.validate_connection()
         
-        if success:
+        if not auth_success:
+            return jsonify({
+                'success': False,
+                'message': 'Falha na conexão. Verifique a URL do WordPress e suas credenciais.'
+            })
+        
+        # Step 2: Test post permissions
+        publish_permission = wp_service.test_post_permission()
+        
+        if auth_success and publish_permission:
             return jsonify({
                 'success': True,
-                'message': 'Connection successful! Your WordPress credentials are working.'
+                'message': 'Conexão bem-sucedida! Suas credenciais do WordPress têm permissão para publicar conteúdo.'
             })
         else:
             return jsonify({
                 'success': False,
-                'message': 'Connection failed. Please check your WordPress URL and credentials.'
+                'permission_error': True,
+                'message': 'Conexão autenticada com sucesso, mas o usuário não tem permissão para criar posts. ' +
+                          'Verifique se o usuário tem função de Editor ou Autor no WordPress.'
             })
             
     except Exception as e:
-        logger.error(f"Error testing WordPress connection: {str(e)}")
+        logger.error(f"Erro ao testar conexão com WordPress: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f"Error: {str(e)}"
+            'message': f"Erro: {str(e)}"
         }), 500
 
 @settings_bp.route('/settings/api-keys', methods=['GET', 'POST'])

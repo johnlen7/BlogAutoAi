@@ -84,6 +84,14 @@ function testWordPressConnection(data) {
         // Show result
         if (data.success) {
             showToast(data.message, 'success');
+        } else if (data.permission_error) {
+            // Mostrar alerta mais detalhado para erro de permissão
+            Swal.fire({
+                title: 'Erro de Permissão',
+                html: data.message,
+                icon: 'warning',
+                confirmButtonText: 'Entendi'
+            });
         } else {
             showToast(data.message, 'danger');
         }
