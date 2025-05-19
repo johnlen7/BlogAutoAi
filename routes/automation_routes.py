@@ -778,17 +778,28 @@ def schedule_automation():
                 current_datetime = current_datetime + timedelta(hours=interval_hours)
         
         elif schedule_type == 'rss':
-            # Verificar se há notícias não processadas
+            # Obter todos os feeds RSS ativos do usuário
+            feeds = RSSFeed.query.filter_by(user_id=current_user.id, is_active=True).all()
+            
+            if not feeds:
+                flash('Nenhum feed RSS encontrado. Por favor, adicione pelo menos um feed.', 'warning')
+                return redirect(url_for('automation.index'))
+            
+            # Buscar notícias não processadas    
             news_items = NewsItem.query.join(RSSFeed).filter(
                 RSSFeed.user_id == current_user.id,
                 NewsItem.is_processed == False
             ).order_by(NewsItem.published_date.desc()).limit(num_articles).all()
             
             if not news_items:
-                # Buscar feeds automaticamente
+                # Buscar feeds automaticamente para obter novos itens
                 for feed in feeds:
-                    from services.rss_service import fetch_and_process_feed
-                    fetch_and_process_feed(feed)
+                    try:
+                        from services.rss_service import fetch_and_process_feed
+                        fetch_and_process_feed(feed)
+                    except Exception as e:
+                        flash(f"Erro ao processar feed {feed.name}: {str(e)}", "danger")
+                        logger.error(f"Erro ao processar feed {feed.name}: {str(e)}")
                 
                 # Buscar novamente as notícias
                 news_items = NewsItem.query.join(RSSFeed).filter(

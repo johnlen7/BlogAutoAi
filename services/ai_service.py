@@ -324,6 +324,7 @@ CONTEUDO:
         )
         
         db.session.add(article)
+        db.session.flush()  # Necessário para obter o ID do artigo antes de criar o log
         
         # Adicionar log
         log = ArticleLog(
