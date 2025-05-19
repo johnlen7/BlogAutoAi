@@ -296,27 +296,54 @@ function publishExistingArticle() {
         return;
     }
 
-    // Show loading state
-    const publishBtn = document.getElementById('publishArticle');
-    const originalBtnText = publishBtn.innerHTML;
-    publishBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Publishing...';
-    publishBtn.disabled = true;
+    // Mostrar confirmação usando SweetAlert2 antes de publicar
+    Swal.fire({
+        title: document.documentElement.lang === 'en' ? 'Confirm Publication' : 'Confirmar publicação',
+        text: document.documentElement.lang === 'en' ? "Are you sure you want to publish this article immediately?" : "Tem certeza que deseja publicar este artigo imediatamente?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: document.documentElement.lang === 'en' ? 'Yes, publish now' : 'Sim, publicar agora',
+        cancelButtonText: document.documentElement.lang === 'en' ? 'Cancel' : 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Mostrar animação de carregamento
+            if (window.loadingAnimations) {
+                const message = document.documentElement.lang === 'en' ? 'Publishing article in WordPress...' : 'Publicando artigo no WordPress...';
+                window.loadingAnimations.show(message, 'publish');
+            } else {
+                // Fallback para loaders simples se loadingAnimations não estiver disponível
+                const publishBtn = document.getElementById('publishArticle');
+                const originalBtnText = publishBtn.innerHTML;
+                publishBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Publishing...';
+                publishBtn.disabled = true;
+            }
 
-    // Send AJAX request to publish article
-    fetch('/api/publish-article', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            article_id: articleId
-        })
-    })
+            // Send AJAX request to publish article
+            fetch('/api/publish-article', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    article_id: articleId
+                })
+            })
     .then(response => response.json())
     .then(data => {
-        // Reset button state
-        publishBtn.innerHTML = originalBtnText;
-        publishBtn.disabled = false;
+        // Fechar a animação de carregamento
+        if (window.loadingAnimations) {
+            window.loadingAnimations.hide();
+        } else {
+            // Reset button state para fallback
+            const publishBtn = document.getElementById('publishArticle');
+            const originalBtnText = publishBtn ? publishBtn.innerHTML : 'Publish Now';
+            if (publishBtn) {
+                publishBtn.innerHTML = originalBtnText;
+                publishBtn.disabled = false;
+            }
+        }
 
         if (data.success) {
             showToast(data.message, 'success');
@@ -331,8 +358,18 @@ function publishExistingArticle() {
     })
     .catch(error => {
         console.error('Error publishing article:', error);
-        publishBtn.innerHTML = originalBtnText;
-        publishBtn.disabled = false;
+        // Fechar a animação de carregamento em caso de erro
+        if (window.loadingAnimations) {
+            window.loadingAnimations.hide();
+        } else {
+            // Reset button state para fallback
+            const publishBtn = document.getElementById('publishArticle');
+            const originalBtnText = publishBtn ? publishBtn.innerHTML : 'Publish Now';
+            if (publishBtn) {
+                publishBtn.innerHTML = originalBtnText;
+                publishBtn.disabled = false;
+            }
+        }
         showToast('Error publishing article. Please try again.', 'danger');
     });
 }
