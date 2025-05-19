@@ -516,12 +516,12 @@ def schedule_automation():
         return redirect(url_for('automation.index'))
     
     # Verificar dados necessários
-    schedule_type = data.get('scheduleType')
+    schedule_type = data.get('content_type')
     if not schedule_type or schedule_type not in ['themes', 'rss']:
         flash('Tipo de agendamento inválido. Escolha temas ou feeds RSS.', 'danger')
         return redirect(url_for('automation.index'))
     
-    ai_model = data.get('aiModel')
+    ai_model = data.get('ai_model')
     if not ai_model or ai_model not in ['claude', 'gpt']:
         flash('Modelo de IA inválido. Escolha Claude ou GPT.', 'danger')
         return redirect(url_for('automation.index'))
