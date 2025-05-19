@@ -33,23 +33,23 @@
             </div>
             <div class="col-md-3">
                 <select class="form-select" name="sort">
-                    <option value="updated_desc" {% if sort == 'updated_desc' %}selected{% endif %}>Newest Updated</option>
-                    <option value="updated_asc" {% if sort == 'updated_asc' %}selected{% endif %}>Oldest Updated</option>
-                    <option value="created_desc" {% if sort == 'created_desc' %}selected{% endif %}>Newest Created</option>
-                    <option value="created_asc" {% if sort == 'created_asc' %}selected{% endif %}>Oldest Created</option>
-                    <option value="title_asc" {% if sort == 'title_asc' %}selected{% endif %}>Title (A-Z)</option>
-                    <option value="title_desc" {% if sort == 'title_desc' %}selected{% endif %}>Title (Z-A)</option>
-                    <option value="scheduled_asc" {% if sort == 'scheduled_asc' %}selected{% endif %}>Schedule (Soonest)</option>
-                    <option value="scheduled_desc" {% if sort == 'scheduled_desc' %}selected{% endif %}>Schedule (Latest)</option>
+                    <option value="updated_desc" {% if sort == 'updated_desc' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Atualizados Recentemente{% else %}Newest Updated{% endif %}</option>
+                    <option value="updated_asc" {% if sort == 'updated_asc' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Atualizados Há Mais Tempo{% else %}Oldest Updated{% endif %}</option>
+                    <option value="created_desc" {% if sort == 'created_desc' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Criados Recentemente{% else %}Newest Created{% endif %}</option>
+                    <option value="created_asc" {% if sort == 'created_asc' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Criados Há Mais Tempo{% else %}Oldest Created{% endif %}</option>
+                    <option value="title_asc" {% if sort == 'title_asc' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Título (A-Z){% else %}Title (A-Z){% endif %}</option>
+                    <option value="title_desc" {% if sort == 'title_desc' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Título (Z-A){% else %}Title (Z-A){% endif %}</option>
+                    <option value="scheduled_asc" {% if sort == 'scheduled_asc' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Agendamento (Próximos){% else %}Schedule (Soonest){% endif %}</option>
+                    <option value="scheduled_desc" {% if sort == 'scheduled_desc' %}selected{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Agendamento (Posteriores){% else %}Schedule (Latest){% endif %}</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-filter me-1"></i> Apply
+                        <i class="fas fa-filter me-1"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Aplicar{% else %}Apply{% endif %}
                     </button>
                     <button type="button" class="btn btn-outline-secondary" id="clearFilters">
-                        <i class="fas fa-times me-1"></i> Clear
+                        <i class="fas fa-times me-1"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Limpar{% else %}Clear{% endif %}
                     </button>
                 </div>
             </div>
@@ -59,7 +59,7 @@
 
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0">Article List</h5>
+        <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Lista de Artigos{% else %}Article List{% endif %}</h5>
     </div>
     <div class="card-body p-0">
         {% if articles %}
@@ -67,11 +67,11 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Title</th>
+                            <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Título{% else %}Title{% endif %}</th>
                             <th>Status</th>
-                            <th>Created</th>
-                            <th>Scheduled</th>
-                            <th>Actions</th>
+                            <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Criado{% else %}Created{% endif %}</th>
+                            <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Agendado{% else %}Scheduled{% endif %}</th>
+                            <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Ações{% else %}Actions{% endif %}</th>
                         </tr>
                     </thead>
                     <tbody>
