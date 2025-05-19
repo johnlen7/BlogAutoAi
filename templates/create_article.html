@@ -149,8 +149,8 @@
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="featuredImageUrl" class="form-label">Image URL</label>
-                                <input type="text" class="form-control" id="featuredImageUrl" placeholder="https://example.com/image.jpg">
+                                <label for="featuredImageUrl" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}URL da Imagem{% else %}Image URL{% endif %}</label>
+                                <input type="text" class="form-control" id="featuredImageUrl" placeholder="{% if session.get('language', 'pt_BR') == 'pt_BR' %}https://exemplo.com/imagem.jpg{% else %}https://example.com/image.jpg{% endif %}">
                             </div>
                             
                             <div id="imagePreview" class="text-center d-none mt-2">
@@ -166,18 +166,18 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <button type="button" id="backToGeneration" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-1"></i> Back
+                                <i class="fas fa-arrow-left me-1"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Voltar{% else %}Back{% endif %}
                             </button>
                         </div>
                         <div class="d-flex gap-2">
                             <button type="button" id="saveArticle" class="btn btn-outline-primary">
-                                <i class="fas fa-save me-1"></i> Save as Draft
+                                <i class="fas fa-save me-1"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Salvar como Rascunho{% else %}Save as Draft{% endif %}
                             </button>
                             <button type="button" id="scheduleArticle" class="btn btn-warning">
-                                <i class="fas fa-calendar-alt me-1"></i> Schedule
+                                <i class="fas fa-calendar-alt me-1"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Agendar{% else %}Schedule{% endif %}
                             </button>
                             <button type="button" id="publishArticle" class="btn btn-success">
-                                <i class="fas fa-upload me-1"></i> Publish Now
+                                <i class="fas fa-upload me-1"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Publicar Agora{% else %}Publish Now{% endif %}
                             </button>
                         </div>
                     </div>
@@ -192,7 +192,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Schedule Publication</h5>
+                <h5 class="modal-title">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Agendar Publicação{% else %}Schedule Publication{% endif %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -200,12 +200,12 @@
                     <input type="hidden" id="scheduleArticleId" value="">
                     
                     <div class="mb-3">
-                        <label for="scheduleDate" class="form-label">Publication Date</label>
+                        <label for="scheduleDate" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Data de Publicação{% else %}Publication Date{% endif %}</label>
                         <input type="date" class="form-control" id="scheduleDate" required>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="scheduleTime" class="form-label">Publication Time (24-hour format)</label>
+                        <label for="scheduleTime" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Horário de Publicação (formato 24h){% else %}Publication Time (24-hour format){% endif %}</label>
                         <input type="time" class="form-control" id="scheduleTime" required>
                     </div>
                     
