@@ -463,7 +463,6 @@ def fetch_feed(feed_id):
 @login_required
 def process_news_item(news_item_id):
     """Processar item de notícia manualmente para criar um artigo"""
-    from services.ai_service import generate_article_from_news
     
     news_item = NewsItem.query.join(RSSFeed).filter(
         NewsItem.id == news_item_id,
@@ -496,18 +495,39 @@ def process_news_item(news_item_id):
         return jsonify({'success': False, 'message': 'Configure uma conta WordPress primeiro'}), 400
     
     try:
-        # Gerar artigo a partir da notícia
-        article = generate_article_from_news(news_item, ai_model, current_user.id, wp_config.id)
+        # Usar o novo processador de notícias mais robusto
+        from services.news_processor import process_news_item as process_news_function
         
-        # Marcar como processado
-        news_item.is_processed = True
-        db.session.commit()
+        # Processar a notícia com tratamento de erros melhorado
+        article, success, message = process_news_function(
+            news_item=news_item, 
+            ai_model=ai_model, 
+            user_id=current_user.id, 
+            wp_config_id=wp_config.id
+        )
         
-        return jsonify({
-            'success': True, 
-            'message': f'Artigo criado com sucesso: "{article.title}"',
-            'article_id': article.id
-        })
+        if success and article:
+            # Processo completo bem-sucedido
+            return jsonify({
+                'success': True, 
+                'message': f'Artigo criado com sucesso: "{article.title}"',
+                'article_id': article.id
+            })
+        elif article:
+            # Artigo criado mas com alguns problemas
+            return jsonify({
+                'success': True, 
+                'warning': True,
+                'message': f'Artigo criado como rascunho, mas com avisos: {message}',
+                'article_id': article.id
+            })
+        else:
+            # Falha completa
+            return jsonify({
+                'success': False, 
+                'message': f'Falha ao processar notícia: {message}'
+            }), 500
+            
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erro ao processar notícia: {str(e)}")
