@@ -738,24 +738,36 @@ def schedule_automation():
     # Validar configurações de publicação
     settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()
     if not settings:
-        flash('Configure as opções de automação primeiro antes de agendar artigos.', 'danger')
-        return redirect(url_for('automation.index'))
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Configure as opções de automação primeiro antes de agendar artigos.'})
+        else:
+            flash('Configure as opções de automação primeiro antes de agendar artigos.', 'danger')
+            return redirect(url_for('automation.index'))
     
     if not settings.wordpress_config_id:
-        flash('Configure um site WordPress para publicação nas configurações de automação.', 'danger')
-        return redirect(url_for('automation.index'))
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Configure um site WordPress para publicação nas configurações de automação.'})
+        else:
+            flash('Configure um site WordPress para publicação nas configurações de automação.', 'danger')
+            return redirect(url_for('automation.index'))
     
     # Verificar se há temas ou feeds disponíveis
     if schedule_type == 'themes':
         themes = AutomationTheme.query.filter_by(user_id=current_user.id, is_active=True).all()
         if not themes:
-            flash('Nenhum tema ativo encontrado. Por favor, crie pelo menos um tema.', 'danger')
-            return redirect(url_for('automation.index'))
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Nenhum tema ativo encontrado. Por favor, crie pelo menos um tema.'})
+            else:
+                flash('Nenhum tema ativo encontrado. Por favor, crie pelo menos um tema.', 'danger')
+                return redirect(url_for('automation.index'))
     elif schedule_type == 'rss':
         feeds = RSSFeed.query.filter_by(user_id=current_user.id, is_active=True).all()
         if not feeds:
-            flash('Nenhum feed RSS ativo encontrado. Por favor, adicione pelo menos um feed.', 'danger')
-            return redirect(url_for('automation.index'))
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Nenhum feed RSS ativo encontrado. Por favor, adicione pelo menos um feed.'})
+            else:
+                flash('Nenhum feed RSS ativo encontrado. Por favor, adicione pelo menos um feed.', 'danger')
+                return redirect(url_for('automation.index'))
     
     try:
         # Preparar agendamento
@@ -886,10 +898,42 @@ def schedule_automation():
             settings.next_scheduled_run = start_datetime
             db.session.commit()
         
-        flash(f'Agendamento configurado com sucesso para {scheduled_count} artigos a partir de {schedule_date} {schedule_time}', 'success')
-        return redirect(url_for('automation.index'))
+        # Registrar a ação bem-sucedida no monitor
+        AutomationMonitor.register_event(
+            current_user.id,
+            "schedule",
+            f"Agendamento configurado para {scheduled_count} artigos a partir de {schedule_date} {schedule_time}",
+            "success"
+        )
+        
+        # Responder de acordo com o tipo de requisição
+        if request.is_json:
+            return jsonify({
+                'success': True, 
+                'message': f'Agendamento configurado com sucesso para {scheduled_count} artigos a partir de {schedule_date} {schedule_time}',
+                'scheduled_count': scheduled_count,
+                'start_time': start_datetime.isoformat()
+            })
+        else:
+            flash(f'Agendamento configurado com sucesso para {scheduled_count} artigos a partir de {schedule_date} {schedule_time}', 'success')
+            return redirect(url_for('automation.index'))
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erro ao agendar automação: {str(e)}")
-        flash(f'Erro ao agendar automação: {str(e)}', 'danger')
-        return redirect(url_for('automation.index'))
+        
+        # Registrar o erro no monitor
+        AutomationMonitor.register_event(
+            current_user.id,
+            "schedule",
+            f"Falha ao agendar automação: {str(e)}",
+            "error"
+        )
+        
+        if request.is_json:
+            return jsonify({
+                'success': False, 
+                'message': f'Erro ao agendar automação: {str(e)}'
+            })
+        else:
+            flash(f'Erro ao agendar automação: {str(e)}', 'danger')
+            return redirect(url_for('automation.index'))

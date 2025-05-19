@@ -426,16 +426,37 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            // Esconder o indicador de carregamento
+            Swal.close();
+            
             if (data.success) {
-                alert(data.message || '{{ "Geração agendada com sucesso" if session.get("language", "pt_BR") == "pt_BR" else "Generation scheduled successfully" }}');
-                window.location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: '{{ "Agendamento concluído" if session.get("language", "pt_BR") == "pt_BR" else "Scheduling completed" }}',
+                    html: data.message || '{{ "Geração agendada com sucesso" if session.get("language", "pt_BR") == "pt_BR" else "Generation scheduled successfully" }}',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.reload();
+                });
             } else {
-                alert(data.message || '{{ "Ocorreu um erro. Tente novamente." if session.get("language", "pt_BR") == "pt_BR" else "An error occurred. Please try again." }}');
+                Swal.fire({
+                    icon: 'error',
+                    title: '{{ "Erro no agendamento" if session.get("language", "pt_BR") == "pt_BR" else "Scheduling error" }}',
+                    html: data.message || '{{ "Ocorreu um erro. Tente novamente." if session.get("language", "pt_BR") == "pt_BR" else "An error occurred. Please try again." }}',
+                    confirmButtonText: 'OK'
+                });
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('{{ "Ocorreu um erro. Tente novamente." if session.get("language", "pt_BR") == "pt_BR" else "An error occurred. Please try again." }}');
+            // Esconder o indicador de carregamento e mostrar erro
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: '{{ "Erro de conexão" if session.get("language", "pt_BR") == "pt_BR" else "Connection error" }}',
+                html: '{{ "Ocorreu um erro de conexão. Tente novamente." if session.get("language", "pt_BR") == "pt_BR" else "A connection error occurred. Please try again." }}',
+                confirmButtonText: 'OK'
+            });
         });
     });
     
