@@ -145,15 +145,7 @@ def update_ai_service_to_use_existing_article(generate_article_from_news_functio
         function: Nova função com suporte a artigos existentes
     """
     def wrapper(news_item, ai_model, user_id, wp_config_id=None, existing_article_id=None):
-        # Se temos um artigo existente, busque-o
-        if existing_article_id:
-            article = Article.query.get(existing_article_id)
-            if article:
-                # Implementar lógica para atualizar o artigo existente
-                # em vez de criar um novo
-                pass
-        
-        # Caso contrário, use a função original
-        return generate_article_from_news_function(news_item, ai_model, user_id, wp_config_id)
+        # A função AI já foi atualizada para suportar existing_article_id
+        return generate_article_from_news_function(news_item, ai_model, user_id, wp_config_id, existing_article_id)
     
     return wrapper

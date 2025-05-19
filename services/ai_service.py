@@ -214,7 +214,7 @@ CONTEUDO:
         logger.error(f"Erro ao gerar artigo a partir do tema: {str(e)}")
         raise e
 
-def generate_article_from_news(news_item, ai_model, user_id, wp_config_id):
+def generate_article_from_news(news_item, ai_model, user_id, wp_config_id=None, existing_article_id=None):
     """
     Gera um artigo reescrito a partir de um item de notícia
     
@@ -222,10 +222,11 @@ def generate_article_from_news(news_item, ai_model, user_id, wp_config_id):
         news_item: Objeto NewsItem
         ai_model: Modelo de IA a ser usado (AIModel)
         user_id: ID do usuário
-        wp_config_id: ID da configuração WordPress
+        wp_config_id: ID da configuração WordPress (opcional)
+        existing_article_id: ID de um artigo existente para atualizar (opcional)
         
     Returns:
-        Article: Objeto do artigo gerado
+        Article: Objeto do artigo gerado ou atualizado
     """
     # Construir prompt para o modelo de IA
     prompt = f"""Reescreva completamente a notícia abaixo para criar um artigo original para blog.
@@ -306,7 +307,30 @@ CONTEUDO:
         # Contar palavras
         word_count = len(conteudo.split())
         
-        # Criar artigo
+        # Verificar se estamos atualizando um artigo existente
+        if existing_article_id:
+            article = Article.query.get(existing_article_id)
+            if article:
+                # Atualizar artigo existente
+                article.title = titulo
+                article.content = conteudo
+                article.meta_description = meta[:320] if meta else None
+                article.tags = tags[:256] if tags else None
+                article.word_count = word_count
+                article.updated_at = datetime.utcnow()
+                
+                # Adicionar log
+                log = ArticleLog(
+                    message=f"Artigo atualizado com conteúdo gerado a partir da notícia '{news_item.title}'",
+                    log_type=LogType.INFO,
+                    article_id=article.id
+                )
+                db.session.add(log)
+                db.session.commit()
+                
+                return article
+        
+        # Se não estamos atualizando, cria um novo artigo 
         article = Article(
             title=titulo,
             content=conteudo,
