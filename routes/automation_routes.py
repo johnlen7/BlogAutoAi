@@ -18,21 +18,38 @@ automation_bp = Blueprint('automation', __name__, url_prefix='/automation')
 @automation_bp.route('/', methods=['GET'])
 @login_required
 def index():
-    """Página inicial de automação"""
-    # Verificar se o usuário tem configurações de automação
+    """Página inicial de automação - 100% funcional"""
+    # Buscar configurações de automação do usuário
     automation_settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()
+    
+    # Buscar contagem de temas e feeds
     theme_count = AutomationTheme.query.filter_by(user_id=current_user.id).count()
     feed_count = RSSFeed.query.filter_by(user_id=current_user.id).count()
     
-    # Se o usuário já tem temas ou feeds, mostrar a página principal de automação
-    if theme_count > 0 or feed_count > 0:
-        return render_template('automation/index.html', 
-                              automation_settings=automation_settings,
-                              theme_count=theme_count,
-                              feed_count=feed_count)
+    # Buscar configurações WordPress para o usuário
+    wordpress_configs = WordPressConfig.query.filter_by(user_id=current_user.id).all()
     
-    # Caso contrário, mostrar a página de placeholder com instruções
-    return render_template('automation/placeholder.html')
+    # Buscar artigos programados
+    scheduled_articles = Article.query.filter_by(
+        user_id=current_user.id,
+        status=ArticleStatus.SCHEDULED
+    ).order_by(Article.scheduled_date.asc()).all()
+    
+    # Total de artigos publicados automaticamente
+    auto_published_count = Article.query.filter_by(
+        user_id=current_user.id,
+        status=ArticleStatus.PUBLISHED,
+        is_automated=True
+    ).count()
+    
+    # Sempre mostrar a página principal de automação (funcional)
+    return render_template('automation/index.html', 
+                          automation_settings=automation_settings,
+                          theme_count=theme_count,
+                          feed_count=feed_count,
+                          wordpress_configs=wordpress_configs,
+                          scheduled_articles=scheduled_articles,
+                          auto_published_count=auto_published_count)
 
 @automation_bp.route('/themes', methods=['GET'])
 @login_required
@@ -337,59 +354,72 @@ def delete_feed(feed_id):
 @login_required
 def save_automation_settings():
     """Salvar configurações de automação"""
-    data = request.json
-    
-    if not data:
-        return jsonify({'success': False, 'message': 'Dados incompletos'}), 400
-    
-    # Verificar se a configuração WordPress existe e pertence ao usuário
-    wordpress_config_id = data.get('wordpress_config_id')
-    if wordpress_config_id:
+    # Processar dados do formulário (form data)
+    if request.method == 'POST':
+        # Obter dados do formulário
+        is_active = 'is_active' in request.form
+        post_interval_hours = request.form.get('post_interval_hours', type=int, default=6)
+        min_word_count = request.form.get('min_word_count', type=int, default=700)
+        max_word_count = request.form.get('max_word_count', type=int, default=1500)
+        timezone_offset = request.form.get('timezone_offset', type=int, default=-3)
+        active_hours_start = request.form.get('active_hours_start', type=int, default=8)
+        active_hours_end = request.form.get('active_hours_end', type=int, default=22)
+        wordpress_config_id = request.form.get('wordpress_config_id', type=int)
+        
+        # Validações
+        if not wordpress_config_id:
+            flash('Por favor, selecione um site WordPress', 'error')
+            return redirect(url_for('automation.index'))
+        
+        # Verificar se a configuração WordPress existe e pertence ao usuário
         wp_config = WordPressConfig.query.filter_by(id=wordpress_config_id, user_id=current_user.id).first()
         if not wp_config:
-            return jsonify({'success': False, 'message': 'Configuração WordPress não encontrada'}), 404
+            flash('Configuração WordPress não encontrada', 'error')
+            return redirect(url_for('automation.index'))
     
-    try:
-        # Buscar ou criar configurações de automação
-        settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()
-        
-        if not settings:
-            settings = AutomationSettings(
-                user_id=current_user.id,
-                is_active=data.get('is_active', True),
-                post_interval_hours=data.get('post_interval_hours', 6),
-                min_word_count=data.get('min_word_count', 700),
-                max_word_count=data.get('max_word_count', 1500),
-                timezone_offset=data.get('timezone_offset', -3),
-                active_hours_start=data.get('active_hours_start', 8),
-                active_hours_end=data.get('active_hours_end', 22),
-                wordpress_config_id=wordpress_config_id
-            )
-            db.session.add(settings)
-        else:
-            settings.is_active = data.get('is_active', settings.is_active)
-            settings.post_interval_hours = data.get('post_interval_hours', settings.post_interval_hours)
-            settings.min_word_count = data.get('min_word_count', settings.min_word_count)
-            settings.max_word_count = data.get('max_word_count', settings.max_word_count)
-            settings.timezone_offset = data.get('timezone_offset', settings.timezone_offset)
-            settings.active_hours_start = data.get('active_hours_start', settings.active_hours_start)
-            settings.active_hours_end = data.get('active_hours_end', settings.active_hours_end)
-            settings.wordpress_config_id = wordpress_config_id
-            settings.updated_at = datetime.utcnow()
-        
-        # Calcular a próxima execução agendada (se estiver ativo)
-        if settings.is_active:
-            now = datetime.utcnow()
-            next_run = now + timedelta(hours=1)  # Por padrão, inicia dentro de 1 hora
-            settings.next_scheduled_run = next_run
-        
-        db.session.commit()
-        
-        return jsonify({'success': True, 'message': 'Configurações salvas com sucesso'})
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Erro ao salvar configurações: {str(e)}")
-        return jsonify({'success': False, 'message': f'Erro ao salvar configurações: {str(e)}'}), 500
+        try:
+            # Buscar ou criar configurações de automação
+            settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()
+            
+            if not settings:
+                settings = AutomationSettings(
+                    user_id=current_user.id,
+                    is_active=is_active,
+                    post_interval_hours=post_interval_hours,
+                    min_word_count=min_word_count,
+                    max_word_count=max_word_count,
+                    timezone_offset=timezone_offset,
+                    active_hours_start=active_hours_start,
+                    active_hours_end=active_hours_end,
+                    wordpress_config_id=wordpress_config_id
+                )
+                db.session.add(settings)
+            else:
+                settings.is_active = is_active
+                settings.post_interval_hours = post_interval_hours
+                settings.min_word_count = min_word_count
+                settings.max_word_count = max_word_count
+                settings.timezone_offset = timezone_offset
+                settings.active_hours_start = active_hours_start
+                settings.active_hours_end = active_hours_end
+                settings.wordpress_config_id = wordpress_config_id
+                settings.updated_at = datetime.utcnow()
+            
+            # Calcular a próxima execução agendada (se estiver ativo)
+            if settings.is_active:
+                now = datetime.utcnow()
+                next_run = now + timedelta(hours=1)  # Por padrão, inicia dentro de 1 hora
+                settings.next_scheduled_run = next_run
+            
+            db.session.commit()
+            
+            flash('Configurações de automação salvas com sucesso!', 'success')
+            return redirect(url_for('automation.index'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Erro ao salvar configurações: {str(e)}")
+            flash(f'Erro ao salvar configurações: {str(e)}', 'error')
+            return redirect(url_for('automation.index'))
 
 @automation_bp.route('/feeds/<int:feed_id>/fetch', methods=['POST'])
 @login_required
