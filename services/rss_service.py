@@ -1,90 +1,144 @@
+import os
 import logging
 import feedparser
 import trafilatura
-from datetime import datetime
-from typing import List, Dict, Any, Optional
+import html2text
+from datetime import datetime, timezone
+from urllib.parse import urlparse
+from app import db
+from models import RSSFeed, NewsItem, Article, ArticleStatus, AIModel
 
 logger = logging.getLogger(__name__)
+h2t = html2text.HTML2Text()
+h2t.ignore_links = False
+h2t.ignore_images = False
+h2t.ignore_tables = False
 
-class RSSService:
-    """Serviço para capturar e processar feeds RSS"""
+def fetch_and_process_feed(feed):
+    """
+    Busca e processa um feed RSS, salvando novos itens no banco de dados
     
-    @staticmethod
-    def fetch_feed_items(feed_url: str) -> List[Dict[str, Any]]:
-        """
-        Busca e processa um feed RSS a partir de uma URL
+    Args:
+        feed: Objeto RSSFeed do banco de dados
         
-        Args:
-            feed_url: URL do feed RSS
-            
-        Returns:
-            Lista de itens do feed como dicionários
-        """
-        try:
-            # Parse do feed RSS
-            parsed_feed = feedparser.parse(feed_url)
-            
-            if hasattr(parsed_feed, 'bozo_exception'):
-                logger.error(f"Erro ao analisar feed: {parsed_feed.bozo_exception}")
-                return []
-            
-            items = []
-            
-            for entry in parsed_feed.entries:
-                # Extrair data de publicação
-                published_date = None
-                if hasattr(entry, 'published_parsed'):
-                    # Converter struct_time para datetime
-                    published_date = datetime(*entry.published_parsed[:6])
-                elif hasattr(entry, 'updated_parsed'):
-                    published_date = datetime(*entry.updated_parsed[:6])
-                
-                # Extrair conteúdo
-                content = ""
-                if hasattr(entry, 'content'):
-                    content = entry.content[0].value
-                elif hasattr(entry, 'summary'):
-                    content = entry.summary
-                else:
-                    # Tentar extrair conteúdo da página
-                    try:
-                        content = RSSService._extract_content_from_url(entry.link)
-                    except Exception as e:
-                        logger.warning(f"Não foi possível extrair conteúdo da URL {entry.link}: {str(e)}")
-                
-                # Criar representação do item
-                item = {
-                    'title': entry.title,
-                    'link': entry.link,
-                    'guid': entry.id if hasattr(entry, 'id') else entry.link,
-                    'published_date': published_date,
-                    'content': content
-                }
-                
-                items.append(item)
-            
-            return items
-        except Exception as e:
-            logger.error(f"Erro ao processar feed RSS: {str(e)}")
-            return []
+    Returns:
+        tuple: (quantidade de novos itens, total de itens no feed)
+    """
+    logger.info(f"Buscando feed: {feed.name} ({feed.url})")
     
-    @staticmethod
-    def _extract_content_from_url(url: str) -> Optional[str]:
-        """
-        Extrai o conteúdo principal de uma URL
+    try:
+        # Fazer o parse do feed
+        parsed = feedparser.parse(feed.url)
         
-        Args:
-            url: URL da página
+        if parsed.bozo == 1:
+            # Feed inválido
+            logger.error(f"Erro ao processar feed {feed.name}: {parsed.bozo_exception}")
+            return 0, 0
+        
+        # Processar entradas
+        new_items_count = 0
+        total_items = len(parsed.entries)
+        
+        for entry in parsed.entries:
+            # Obter GUID ou link como identificador único
+            guid = getattr(entry, 'id', entry.link)
             
-        Returns:
-            Conteúdo extraído ou None se falhar
-        """
+            # Verificar se o item já existe
+            existing_item = NewsItem.query.filter_by(guid=guid).first()
+            if existing_item:
+                continue
+            
+            # Obter data de publicação (se disponível)
+            published_date = None
+            if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                try:
+                    published_date = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+                except:
+                    pass
+            
+            # Obtendo o conteúdo
+            content = ""
+            if hasattr(entry, 'content') and entry.content:
+                content = entry.content[0].value
+            elif hasattr(entry, 'description') and entry.description:
+                content = entry.description
+            
+            # Extrair o texto completo do link
+            full_content = ""
+            try:
+                downloaded = trafilatura.fetch_url(entry.link)
+                full_content = trafilatura.extract(downloaded) or ""
+            except Exception as e:
+                logger.warning(f"Erro ao extrair conteúdo de {entry.link}: {str(e)}")
+            
+            # Se não conseguiu extrair conteúdo pelo trafilatura, usar o que já temos
+            if not full_content and content:
+                full_content = h2t.handle(content)
+            
+            # Criar novo item de notícia
+            news_item = NewsItem(
+                title=entry.title,
+                description=content[:2000] if content else "",  # Limitar tamanho da descrição
+                content=full_content[:10000] if full_content else "",  # Limitar tamanho do conteúdo
+                link=entry.link,
+                guid=guid,
+                published_date=published_date,
+                is_processed=False,
+                rss_feed_id=feed.id,
+                user_id=feed.user_id
+            )
+            
+            db.session.add(news_item)
+            new_items_count += 1
+        
+        # Salvar no banco de dados
+        db.session.commit()
+        
+        logger.info(f"Feed {feed.name} processado. {new_items_count} novos itens de {total_items} total.")
+        return new_items_count, total_items
+    
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao processar feed {feed.name}: {str(e)}")
+        raise e
+
+def fetch_all_feeds():
+    """
+    Busca e processa todos os feeds RSS ativos
+    
+    Returns:
+        dict: Estatísticas de processamento
+    """
+    stats = {
+        'total_feeds': 0,
+        'processed_feeds': 0,
+        'feeds_with_errors': 0,
+        'new_items': 0,
+        'total_items': 0
+    }
+    
+    # Buscar todos os feeds ativos
+    feeds = RSSFeed.query.filter_by(is_active=True).all()
+    stats['total_feeds'] = len(feeds)
+    
+    if not feeds:
+        logger.info("Nenhum feed ativo encontrado.")
+        return stats
+    
+    # Processar cada feed
+    for feed in feeds:
         try:
-            downloaded = trafilatura.fetch_url(url)
-            if downloaded:
-                content = trafilatura.extract(downloaded)
-                return content
-            return None
+            new_items, total_items = fetch_and_process_feed(feed)
+            stats['new_items'] += new_items
+            stats['total_items'] += total_items
+            stats['processed_feeds'] += 1
+            
+            # Atualizar a data da última busca
+            feed.last_fetch = datetime.utcnow()
+            db.session.commit()
         except Exception as e:
-            logger.error(f"Erro ao extrair conteúdo de {url}: {str(e)}")
-            return None
+            stats['feeds_with_errors'] += 1
+            logger.error(f"Erro ao processar feed {feed.name}: {str(e)}")
+    
+    logger.info(f"Processamento de feeds concluído. Estatísticas: {stats}")
+    return stats

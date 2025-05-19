@@ -8,7 +8,7 @@ from models import (
     Article, ArticleStatus, AIModel, RepeatSchedule, 
     WordPressConfig, APIKey, APIType, ArticleLog, LogType
 )
-from services.ai_service import AIService
+from services.ai_service import generate_article_from_news, generate_article_from_theme
 from services.wordpress_service import WordPressService
 
 logger = logging.getLogger(__name__)
@@ -141,12 +141,12 @@ def generate_content():
         }), 400
     
     try:
-        # Initialize AI service
-        ai_service = AIService(api_keys)
-        
         # Generate content based on type
         if content_type == 'keyword':
-            result = ai_service.generate_article_from_keyword(content_value, model_type)
+            # Criar tema temporário para geração
+            temp_theme = type('TempTheme', (), {'name': 'Tema temporário', 'keywords': content_value, 'id': None})
+            article = generate_article_from_theme(temp_theme, model_type, current_user.id, None)
+            result = {'title': article.title, 'content': article.content}
         else:  # url
             result = ai_service.generate_article_from_url(content_value, model_type)
         

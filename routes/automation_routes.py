@@ -5,8 +5,11 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
-from models import AutomationTheme, RSSFeed, NewsItem, AutomationSettings
-from models import Article, ArticleStatus, AIModel, RepeatSchedule, LogType, ArticleLog, WordPressConfig
+from models import (
+    AutomationTheme, RSSFeed, NewsItem, AutomationSettings,
+    Article, ArticleStatus, AIModel, RepeatSchedule, LogType, 
+    ArticleLog, WordPressConfig, APIKey, APIType
+)
 
 logger = logging.getLogger(__name__)
 
@@ -217,4 +220,405 @@ def feeds_list():
     """Lista de feeds RSS"""
     feeds = RSSFeed.query.filter_by(user_id=current_user.id).all()
     themes = AutomationTheme.query.filter_by(user_id=current_user.id).all()
-    return render_template('automation/feeds.html', feeds=feeds, themes=themes)
+    news_items = NewsItem.query.join(RSSFeed).filter(RSSFeed.user_id == current_user.id).order_by(NewsItem.published_date.desc()).limit(20).all()
+    return render_template('automation/feeds.html', feeds=feeds, themes=themes, news_items=news_items)
+
+@automation_bp.route('/feeds', methods=['POST'])
+@login_required
+def create_feed():
+    """Criar novo feed RSS"""
+    data = request.json
+    
+    if not data or not data.get('name') or not data.get('url') or not data.get('theme_id'):
+        return jsonify({'success': False, 'message': 'Dados incompletos'}), 400
+    
+    # Verificar se o tema existe e pertence ao usuário
+    theme = AutomationTheme.query.filter_by(id=data['theme_id'], user_id=current_user.id).first()
+    if not theme:
+        return jsonify({'success': False, 'message': 'Tema não encontrado'}), 404
+    
+    try:
+        feed = RSSFeed(
+            name=data['name'],
+            url=data['url'],
+            is_active=data.get('is_active', True),
+            theme_id=data['theme_id'],
+            user_id=current_user.id
+        )
+        
+        db.session.add(feed)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Feed criado com sucesso', 'feed_id': feed.id})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao criar feed: {str(e)}")
+        return jsonify({'success': False, 'message': f'Erro ao criar feed: {str(e)}'}), 500
+
+@automation_bp.route('/feeds/<int:feed_id>', methods=['GET'])
+@login_required
+def get_feed(feed_id):
+    """Obter detalhes de um feed específico"""
+    feed = RSSFeed.query.filter_by(id=feed_id, user_id=current_user.id).first()
+    
+    if not feed:
+        return jsonify({'success': False, 'message': 'Feed não encontrado'}), 404
+    
+    return jsonify({
+        'success': True,
+        'feed': {
+            'id': feed.id,
+            'name': feed.name,
+            'url': feed.url,
+            'theme_id': feed.theme_id,
+            'is_active': feed.is_active,
+            'last_fetch': feed.last_fetch.isoformat() if feed.last_fetch else None
+        }
+    })
+
+@automation_bp.route('/feeds/<int:feed_id>', methods=['PUT'])
+@login_required
+def update_feed(feed_id):
+    """Atualizar um feed existente"""
+    feed = RSSFeed.query.filter_by(id=feed_id, user_id=current_user.id).first()
+    
+    if not feed:
+        return jsonify({'success': False, 'message': 'Feed não encontrado'}), 404
+    
+    data = request.json
+    
+    if not data:
+        return jsonify({'success': False, 'message': 'Dados incompletos'}), 400
+    
+    # Verificar se o tema existe e pertence ao usuário
+    if data.get('theme_id'):
+        theme = AutomationTheme.query.filter_by(id=data['theme_id'], user_id=current_user.id).first()
+        if not theme:
+            return jsonify({'success': False, 'message': 'Tema não encontrado'}), 404
+    
+    try:
+        feed.name = data.get('name', feed.name)
+        feed.url = data.get('url', feed.url)
+        feed.is_active = data.get('is_active', feed.is_active)
+        if data.get('theme_id'):
+            feed.theme_id = data['theme_id']
+        feed.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Feed atualizado com sucesso'})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao atualizar feed: {str(e)}")
+        return jsonify({'success': False, 'message': f'Erro ao atualizar feed: {str(e)}'}), 500
+
+@automation_bp.route('/feeds/<int:feed_id>', methods=['DELETE'])
+@login_required
+def delete_feed(feed_id):
+    """Excluir um feed"""
+    feed = RSSFeed.query.filter_by(id=feed_id, user_id=current_user.id).first()
+    
+    if not feed:
+        return jsonify({'success': False, 'message': 'Feed não encontrado'}), 404
+    
+    try:
+        # Excluir também todos os itens de notícia relacionados ao feed
+        NewsItem.query.filter_by(rss_feed_id=feed.id).delete()
+        db.session.delete(feed)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Feed excluído com sucesso'})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao excluir feed: {str(e)}")
+        return jsonify({'success': False, 'message': f'Erro ao excluir feed: {str(e)}'}), 500
+
+@automation_bp.route('/settings', methods=['POST'])
+@login_required
+def save_automation_settings():
+    """Salvar configurações de automação"""
+    data = request.json
+    
+    if not data:
+        return jsonify({'success': False, 'message': 'Dados incompletos'}), 400
+    
+    # Verificar se a configuração WordPress existe e pertence ao usuário
+    wordpress_config_id = data.get('wordpress_config_id')
+    if wordpress_config_id:
+        wp_config = WordPressConfig.query.filter_by(id=wordpress_config_id, user_id=current_user.id).first()
+        if not wp_config:
+            return jsonify({'success': False, 'message': 'Configuração WordPress não encontrada'}), 404
+    
+    try:
+        # Buscar ou criar configurações de automação
+        settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()
+        
+        if not settings:
+            settings = AutomationSettings(
+                user_id=current_user.id,
+                is_active=data.get('is_active', True),
+                post_interval_hours=data.get('post_interval_hours', 6),
+                min_word_count=data.get('min_word_count', 700),
+                max_word_count=data.get('max_word_count', 1500),
+                timezone_offset=data.get('timezone_offset', -3),
+                active_hours_start=data.get('active_hours_start', 8),
+                active_hours_end=data.get('active_hours_end', 22),
+                wordpress_config_id=wordpress_config_id
+            )
+            db.session.add(settings)
+        else:
+            settings.is_active = data.get('is_active', settings.is_active)
+            settings.post_interval_hours = data.get('post_interval_hours', settings.post_interval_hours)
+            settings.min_word_count = data.get('min_word_count', settings.min_word_count)
+            settings.max_word_count = data.get('max_word_count', settings.max_word_count)
+            settings.timezone_offset = data.get('timezone_offset', settings.timezone_offset)
+            settings.active_hours_start = data.get('active_hours_start', settings.active_hours_start)
+            settings.active_hours_end = data.get('active_hours_end', settings.active_hours_end)
+            settings.wordpress_config_id = wordpress_config_id
+            settings.updated_at = datetime.utcnow()
+        
+        # Calcular a próxima execução agendada (se estiver ativo)
+        if settings.is_active:
+            now = datetime.utcnow()
+            next_run = now + timedelta(hours=1)  # Por padrão, inicia dentro de 1 hora
+            settings.next_scheduled_run = next_run
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Configurações salvas com sucesso'})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao salvar configurações: {str(e)}")
+        return jsonify({'success': False, 'message': f'Erro ao salvar configurações: {str(e)}'}), 500
+
+@automation_bp.route('/feeds/<int:feed_id>/fetch', methods=['POST'])
+@login_required
+def fetch_feed(feed_id):
+    """Buscar e processar novas notícias de um feed RSS"""
+    from services.rss_service import fetch_and_process_feed
+    
+    feed = RSSFeed.query.filter_by(id=feed_id, user_id=current_user.id).first()
+    
+    if not feed:
+        return jsonify({'success': False, 'message': 'Feed não encontrado'}), 404
+    
+    try:
+        # Buscar e processar o feed
+        new_items_count, total_items = fetch_and_process_feed(feed)
+        
+        # Atualizar a data da última busca
+        feed.last_fetch = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'{new_items_count} novos itens encontrados de um total de {total_items}',
+            'new_items_count': new_items_count,
+            'total_items': total_items
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao buscar feed: {str(e)}")
+        return jsonify({'success': False, 'message': f'Erro ao buscar feed: {str(e)}'}), 500
+
+@automation_bp.route('/news/<int:news_item_id>/process', methods=['POST'])
+@login_required
+def process_news_item(news_item_id):
+    """Processar item de notícia manualmente para criar um artigo"""
+    from services.ai_service import generate_article_from_news
+    
+    news_item = NewsItem.query.join(RSSFeed).filter(
+        NewsItem.id == news_item_id,
+        RSSFeed.user_id == current_user.id
+    ).first()
+    
+    if not news_item:
+        return jsonify({'success': False, 'message': 'Item de notícia não encontrado'}), 404
+    
+    # Verificar se já foi processado
+    if news_item.is_processed:
+        return jsonify({'success': False, 'message': 'Este item já foi processado'}), 400
+    
+    # Verificar se existe um modelo de IA configurado
+    api_key_claude = APIKey.query.filter_by(user_id=current_user.id, type=APIType.CLAUDE).first()
+    api_key_gpt = APIKey.query.filter_by(user_id=current_user.id, type=APIType.GPT).first()
+    
+    if not api_key_claude and not api_key_gpt:
+        return jsonify({'success': False, 'message': 'Configure pelo menos uma chave de API para IA'}), 400
+    
+    # Por padrão, preferir Claude se disponível
+    ai_model = AIModel.CLAUDE if api_key_claude else AIModel.GPT
+    
+    # Verificar configurações de WordPress
+    wp_config = WordPressConfig.query.filter_by(user_id=current_user.id, is_default=True).first()
+    if not wp_config:
+        wp_config = WordPressConfig.query.filter_by(user_id=current_user.id).first()
+    
+    if not wp_config:
+        return jsonify({'success': False, 'message': 'Configure uma conta WordPress primeiro'}), 400
+    
+    try:
+        # Gerar artigo a partir da notícia
+        article = generate_article_from_news(news_item, ai_model, current_user.id, wp_config.id)
+        
+        # Marcar como processado
+        news_item.is_processed = True
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Artigo criado com sucesso: "{article.title}"',
+            'article_id': article.id
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao processar notícia: {str(e)}")
+        return jsonify({'success': False, 'message': f'Erro ao processar notícia: {str(e)}'}), 500
+
+@automation_bp.route('/schedule', methods=['POST'])
+@login_required
+def schedule_automation():
+    """Agendar geração e publicação automática de artigos"""
+    data = request.json
+    
+    if not data:
+        return jsonify({'success': False, 'message': 'Dados incompletos'}), 400
+    
+    # Verificar dados necessários
+    schedule_type = data.get('schedule_type')
+    if not schedule_type or schedule_type not in ['themes', 'rss']:
+        return jsonify({'success': False, 'message': 'Tipo de agendamento inválido'}), 400
+    
+    ai_model = data.get('ai_model')
+    if not ai_model or ai_model not in ['claude', 'gpt']:
+        return jsonify({'success': False, 'message': 'Modelo de IA inválido'}), 400
+    
+    # Validar configurações de publicação
+    settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()
+    if not settings:
+        return jsonify({'success': False, 'message': 'Configure as opções de automação primeiro'}), 400
+    
+    if not settings.wordpress_config_id:
+        return jsonify({'success': False, 'message': 'Configure um site WordPress para publicação'}), 400
+    
+    # Verificar se há temas ou feeds disponíveis
+    if schedule_type == 'themes':
+        themes = AutomationTheme.query.filter_by(user_id=current_user.id, is_active=True).all()
+        if not themes:
+            return jsonify({'success': False, 'message': 'Nenhum tema ativo encontrado'}), 400
+    elif schedule_type == 'rss':
+        feeds = RSSFeed.query.filter_by(user_id=current_user.id, is_active=True).all()
+        if not feeds:
+            return jsonify({'success': False, 'message': 'Nenhum feed RSS ativo encontrado'}), 400
+    
+    try:
+        # Preparar agendamento
+        num_articles = int(data.get('num_articles', 5))
+        interval_hours = int(data.get('interval_hours', 6))
+        
+        # Pegar a data/hora de início
+        schedule_date = data.get('schedule_date')
+        schedule_time = data.get('schedule_time')
+        
+        if not schedule_date or not schedule_time:
+            return jsonify({'success': False, 'message': 'Data e hora de início não fornecidas'}), 400
+        
+        try:
+            start_datetime = datetime.strptime(f"{schedule_date}T{schedule_time}", "%Y-%m-%dT%H:%M")
+        except ValueError:
+            return jsonify({'success': False, 'message': 'Formato de data/hora inválido'}), 400
+        
+        # Verificar se a data é no futuro
+        if start_datetime < datetime.now():
+            return jsonify({'success': False, 'message': 'A data e hora de início devem ser no futuro'}), 400
+        
+        # Configurar publicação imediata ou não
+        publish_immediately = data.get('publish_immediately', False)
+        
+        # Criar artigos programados
+        ai_model_enum = AIModel.CLAUDE if ai_model == 'claude' else AIModel.GPT
+        
+        # Preparar o agendamento de múltiplos artigos
+        scheduled_count = 0
+        current_datetime = start_datetime
+        
+        if schedule_type == 'themes':
+            # Usar temas para gerar artigos
+            for i in range(num_articles):
+                # Selecionar um tema com base na prioridade
+                themes_sorted = sorted(themes, key=lambda x: x.priority, reverse=True)
+                selected_theme = themes_sorted[i % len(themes_sorted)]
+                
+                # Criar artigo programado
+                article = Article(
+                    title=f"Artigo programado: {selected_theme.name}",
+                    content="Este conteúdo será gerado automaticamente.",
+                    status=ArticleStatus.SCHEDULED,
+                    scheduled_date=current_datetime,
+                    ai_model=ai_model_enum,
+                    is_automated=True,
+                    source_type="keyword",
+                    keyword=selected_theme.keywords.split(',')[0].strip(),  # Usar primeira palavra-chave
+                    user_id=current_user.id,
+                    wordpress_config_id=settings.wordpress_config_id,
+                    theme_id=selected_theme.id
+                )
+                
+                db.session.add(article)
+                scheduled_count += 1
+                
+                # Avançar para o próximo horário de agendamento
+                current_datetime = current_datetime + timedelta(hours=interval_hours)
+        
+        elif schedule_type == 'rss':
+            # Verificar se há notícias não processadas
+            news_items = NewsItem.query.join(RSSFeed).filter(
+                RSSFeed.user_id == current_user.id,
+                NewsItem.is_processed == False
+            ).order_by(NewsItem.published_date.desc()).limit(num_articles).all()
+            
+            if not news_items:
+                # Buscar feeds automaticamente
+                for feed in feeds:
+                    from services.rss_service import fetch_and_process_feed
+                    fetch_and_process_feed(feed)
+                
+                # Buscar novamente as notícias
+                news_items = NewsItem.query.join(RSSFeed).filter(
+                    RSSFeed.user_id == current_user.id,
+                    NewsItem.is_processed == False
+                ).order_by(NewsItem.published_date.desc()).limit(num_articles).all()
+            
+            # Agendar artigos com base nas notícias
+            for i, news_item in enumerate(news_items):
+                article = Article(
+                    title=f"Reescrita: {news_item.title[:100]}",
+                    content="Este conteúdo será gerado automaticamente a partir da notícia.",
+                    status=ArticleStatus.SCHEDULED,
+                    scheduled_date=current_datetime,
+                    ai_model=ai_model_enum,
+                    is_automated=True,
+                    source_type="rss",
+                    source_url=news_item.link,
+                    user_id=current_user.id,
+                    wordpress_config_id=settings.wordpress_config_id,
+                    news_item_id=news_item.id
+                )
+                
+                db.session.add(article)
+                news_item.is_processed = True
+                scheduled_count += 1
+                
+                # Avançar para o próximo horário de agendamento
+                current_datetime = current_datetime + timedelta(hours=interval_hours)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Agendamento configurado com sucesso para {scheduled_count} artigos a partir de {schedule_date} {schedule_time}'
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao agendar automação: {str(e)}")
+        return jsonify({'success': False, 'message': f'Erro ao agendar automação: {str(e)}'}), 500
