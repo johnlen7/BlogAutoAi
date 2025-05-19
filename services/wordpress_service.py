@@ -253,6 +253,18 @@ class WordPressService:
         logger.info(f"Creating post: {article.title}")
         
         try:
+            # Verificar se a configuração do WordPress é válida
+            if not self.validate_connection():
+                error_msg = f"Falha na conexão com o WordPress: {self.site_url}"
+                logger.error(error_msg)
+                log = ArticleLog(
+                    article_id=article.id,
+                    message=error_msg,
+                    log_type=LogType.ERROR
+                )
+                db.session.add(log)
+                return None
+                
             # Process tags and categories
             tag_names = [tag.strip() for tag in article.tags.split(',')] if article.tags else []
             category_names = [cat.strip() for cat in article.categories.split(',')] if article.categories else []
@@ -270,14 +282,22 @@ class WordPressService:
                 "title": article.title,
                 "content": article.content,
                 "status": "publish",  # or draft, pending, private
-                "slug": article.slug,
-                "excerpt": article.meta_description,
-                "tags": tag_ids,
-                "categories": category_ids
+                "slug": article.slug if article.slug else None,
+                "excerpt": article.meta_description if article.meta_description else '',
             }
+            
+            # Adicionar tags e categorias apenas se existirem
+            if tag_ids:
+                post_data["tags"] = tag_ids
+            if category_ids:
+                post_data["categories"] = category_ids
             
             if featured_media_id:
                 post_data["featured_media"] = featured_media_id
+            
+            # Log completo dos dados que serão enviados
+            logger.info(f"Enviando dados para WordPress: {post_data}")
+            logger.info(f"Endpoint: {self.api_endpoint}/posts")
             
             # Create the post
             response = requests.post(
@@ -287,24 +307,43 @@ class WordPressService:
                 timeout=30
             )
             
+            # Log da resposta
+            logger.info(f"Resposta WordPress - Status: {response.status_code}")
+            logger.info(f"Resposta WordPress - Headers: {response.headers}")
+            
             if response.status_code in (200, 201):
-                post_data = response.json()
-                post_id = post_data['id']
-                
-                # Log success
-                log = ArticleLog(
-                    article_id=article.id,
-                    message=f"Successfully published to WordPress with post ID: {post_id}",
-                    log_type=LogType.SUCCESS
-                )
-                db.session.add(log)
-                
-                logger.info(f"Created post with ID: {post_id}")
-                return post_id
+                try:
+                    post_data = response.json()
+                    post_id = post_data['id']
+                    post_url = post_data.get('link', '')
+                    
+                    # Log success
+                    success_msg = f"Successfully published to WordPress with post ID: {post_id}. URL: {post_url}"
+                    log = ArticleLog(
+                        article_id=article.id,
+                        message=success_msg,
+                        log_type=LogType.SUCCESS
+                    )
+                    db.session.add(log)
+                    
+                    logger.info(success_msg)
+                    return post_id
+                except Exception as json_error:
+                    error_msg = f"Erro ao processar resposta JSON do WordPress: {str(json_error)}"
+                    logger.error(error_msg)
+                    logger.error(f"Conteúdo da resposta: {response.content[:500]}")
+                    
+                    log = ArticleLog(
+                        article_id=article.id,
+                        message=error_msg,
+                        log_type=LogType.ERROR
+                    )
+                    db.session.add(log)
+                    return None
             else:
                 error_msg = f"Failed to create post: {response.status_code}"
                 if response.content:
-                    error_msg += f" - {response.content.decode('utf-8')}"
+                    error_msg += f" - {response.content.decode('utf-8')[:500]}"
                 
                 # Log error
                 log = ArticleLog(
@@ -449,6 +488,18 @@ class WordPressService:
         logger.info(f"Updating post ID: {post_id}")
         
         try:
+            # Verificar se a configuração do WordPress é válida
+            if not self.validate_connection():
+                error_msg = f"Falha na conexão com o WordPress: {self.site_url}"
+                logger.error(error_msg)
+                log = ArticleLog(
+                    article_id=article.id,
+                    message=error_msg,
+                    log_type=LogType.ERROR
+                )
+                db.session.add(log)
+                return False
+                
             # Process tags and categories
             tag_names = [tag.strip() for tag in article.tags.split(',')] if article.tags else []
             category_names = [cat.strip() for cat in article.categories.split(',')] if article.categories else []
@@ -460,17 +511,25 @@ class WordPressService:
             post_data = {
                 "title": article.title,
                 "content": article.content,
-                "slug": article.slug,
-                "excerpt": article.meta_description,
-                "tags": tag_ids,
-                "categories": category_ids
+                "slug": article.slug if article.slug else None,
+                "excerpt": article.meta_description if article.meta_description else '',
             }
+            
+            # Adicionar tags e categorias apenas se existirem
+            if tag_ids:
+                post_data["tags"] = tag_ids
+            if category_ids:
+                post_data["categories"] = category_ids
             
             # Update featured image if changed
             if article.featured_image_url:
                 featured_media_id = self.upload_featured_image(article.featured_image_url)
                 if featured_media_id:
                     post_data["featured_media"] = featured_media_id
+            
+            # Log completo dos dados que serão enviados
+            logger.info(f"Enviando dados para WordPress (UPDATE): {post_data}")
+            logger.info(f"Endpoint: {self.api_endpoint}/posts/{post_id}")
             
             # Update the post
             response = requests.put(
@@ -480,21 +539,42 @@ class WordPressService:
                 timeout=30
             )
             
+            # Log da resposta
+            logger.info(f"Resposta WordPress UPDATE - Status: {response.status_code}")
+            logger.info(f"Resposta WordPress UPDATE - Headers: {response.headers}")
+            
             if response.status_code in (200, 201):
-                # Log success
-                log = ArticleLog(
-                    article_id=article.id,
-                    message=f"Successfully updated WordPress post ID: {post_id}",
-                    log_type=LogType.SUCCESS
-                )
-                db.session.add(log)
-                
-                logger.info(f"Updated post ID: {post_id}")
-                return True
+                try:
+                    post_data = response.json()
+                    post_url = post_data.get('link', '')
+                    
+                    # Log success
+                    success_msg = f"Successfully updated WordPress post ID: {post_id}. URL: {post_url}"
+                    log = ArticleLog(
+                        article_id=article.id,
+                        message=success_msg,
+                        log_type=LogType.SUCCESS
+                    )
+                    db.session.add(log)
+                    
+                    logger.info(success_msg)
+                    return True
+                except Exception as json_error:
+                    error_msg = f"Erro ao processar resposta JSON do WordPress (UPDATE): {str(json_error)}"
+                    logger.error(error_msg)
+                    logger.error(f"Conteúdo da resposta: {response.content[:500]}")
+                    
+                    log = ArticleLog(
+                        article_id=article.id,
+                        message=error_msg,
+                        log_type=LogType.ERROR
+                    )
+                    db.session.add(log)
+                    return False
             else:
                 error_msg = f"Failed to update post: {response.status_code}"
                 if response.content:
-                    error_msg += f" - {response.content.decode('utf-8')}"
+                    error_msg += f" - {response.content.decode('utf-8')[:500]}"
                 
                 # Log error
                 log = ArticleLog(
