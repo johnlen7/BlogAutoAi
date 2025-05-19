@@ -1,6 +1,7 @@
 import csv
 import io
 import logging
+import json
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
@@ -8,8 +9,9 @@ from app import db
 from models import (
     AutomationTheme, RSSFeed, NewsItem, AutomationSettings,
     Article, ArticleStatus, AIModel, RepeatSchedule, LogType, 
-    ArticleLog, WordPressConfig, APIKey, APIType
+    ArticleLog, WordPressConfig, APIKey, APIType, SchedulerLog
 )
+from services.automation_monitor import AutomationMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,10 @@ def index():
         is_automated=True
     ).count()
     
+    # Obter status de automação e saúde do sistema
+    automation_status = AutomationMonitor.get_automation_status(current_user.id)
+    system_health = AutomationMonitor.check_health()
+    
     # Sempre mostrar a página principal de automação (funcional)
     return render_template('automation/index.html', 
                           automation_settings=automation_settings,
@@ -49,7 +55,9 @@ def index():
                           feed_count=feed_count,
                           wordpress_configs=wordpress_configs,
                           scheduled_articles=scheduled_articles,
-                          auto_published_count=auto_published_count)
+                          auto_published_count=auto_published_count,
+                          automation_status=automation_status,
+                          system_health=system_health)
 
 @automation_bp.route('/themes', methods=['GET'])
 @login_required
@@ -504,6 +512,158 @@ def process_news_item(news_item_id):
         db.session.rollback()
         logger.error(f"Erro ao processar notícia: {str(e)}")
         return jsonify({'success': False, 'message': f'Erro ao processar notícia: {str(e)}'}), 500
+
+@automation_bp.route('/monitoring', methods=['GET'])
+@login_required
+def monitoring():
+    """Página de monitoramento e status da automação"""
+    # Obter status de automação e saúde do sistema
+    automation_status = AutomationMonitor.get_automation_status(current_user.id)
+    system_health = AutomationMonitor.check_health()
+    
+    return render_template('automation/monitoring.html',
+                          automation_status=automation_status,
+                          system_health=system_health)
+
+@automation_bp.route('/repair_scheduled_articles', methods=['GET'])
+@login_required
+def repair_scheduled_articles():
+    """Corrige artigos agendados com problemas"""
+    try:
+        # Encontrar artigos com status SCHEDULED mas sem data
+        invalid_articles = Article.query.filter(
+            Article.status == ArticleStatus.SCHEDULED,
+            Article.scheduled_date == None,
+            Article.user_id == current_user.id
+        ).all()
+        
+        # Configurar data de agendamento para agora + 1 hora
+        now = datetime.utcnow()
+        next_hour = now + timedelta(hours=1)
+        
+        count = 0
+        for article in invalid_articles:
+            article.scheduled_date = next_hour
+            count += 1
+            # Incrementar a próxima data em 1 hora para cada artigo
+            next_hour = next_hour + timedelta(hours=1)
+        
+        db.session.commit()
+        
+        # Registrar ação no monitor
+        if count > 0:
+            AutomationMonitor.register_event(
+                current_user.id,
+                "repair",
+                f"Corrigidos {count} artigos agendados sem data",
+                "success"
+            )
+            flash(f'{count} artigos agendados foram reparados com sucesso.', 'success')
+        else:
+            flash('Nenhum artigo com problemas foi encontrado.', 'info')
+            
+        return redirect(url_for('automation.monitoring'))
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao reparar artigos agendados: {str(e)}")
+        flash(f'Erro ao reparar artigos: {str(e)}', 'danger')
+        return redirect(url_for('automation.monitoring'))
+
+@automation_bp.route('/fetch_all_feeds', methods=['GET'])
+@login_required
+def fetch_all_feeds():
+    """Atualiza todos os feeds RSS do usuário"""
+    try:
+        from services.rss_service import fetch_and_process_feed
+        
+        feeds = RSSFeed.query.filter_by(user_id=current_user.id, is_active=True).all()
+        if not feeds:
+            flash('Nenhum feed RSS ativo encontrado.', 'info')
+            return redirect(url_for('automation.monitoring'))
+        
+        # Processar cada feed
+        updated_count = 0
+        news_count = 0
+        
+        for feed in feeds:
+            try:
+                new_items = fetch_and_process_feed(feed)
+                if new_items and len(new_items) > 0:
+                    news_count += len(new_items)
+                updated_count += 1
+            except Exception as feed_error:
+                logger.error(f"Erro ao processar feed {feed.name}: {str(feed_error)}")
+                continue
+        
+        # Registrar ação no monitor
+        AutomationMonitor.register_event(
+            current_user.id,
+            "update",
+            f"Atualizados {updated_count} feeds, {news_count} novas notícias",
+            "success"
+        )
+        
+        flash(f'{updated_count} feeds foram atualizados, com {news_count} novas notícias encontradas.', 'success')
+        return redirect(url_for('automation.monitoring'))
+    except Exception as e:
+        logger.error(f"Erro ao atualizar feeds: {str(e)}")
+        flash(f'Erro ao atualizar feeds: {str(e)}', 'danger')
+        return redirect(url_for('automation.monitoring'))
+
+@automation_bp.route('/clear_logs', methods=['GET'])
+@login_required
+def clear_logs():
+    """Limpa logs antigos do sistema"""
+    try:
+        # Remover logs com mais de 30 dias
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        
+        result = db.session.query(SchedulerLog).filter(
+            SchedulerLog.created_at < thirty_days_ago
+        ).delete()
+        
+        db.session.commit()
+        
+        # Registrar ação no monitor
+        AutomationMonitor.register_event(
+            current_user.id,
+            "maintenance",
+            f"Removidos {result} logs antigos",
+            "success"
+        )
+        
+        flash(f'{result} logs antigos foram removidos com sucesso.', 'success')
+        return redirect(url_for('automation.monitoring'))
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao limpar logs: {str(e)}")
+        flash(f'Erro ao limpar logs: {str(e)}', 'danger')
+        return redirect(url_for('automation.monitoring'))
+
+@automation_bp.route('/restart_scheduler', methods=['GET'])
+@login_required
+def restart_scheduler():
+    """Reinicia o agendador de tarefas"""
+    try:
+        from services.scheduler_service import restart_scheduler as restart_scheduler_service
+        
+        # Reiniciar o agendador
+        restart_scheduler_service()
+        
+        # Registrar ação no monitor
+        AutomationMonitor.register_event(
+            current_user.id,
+            "maintenance",
+            "Agendador de tarefas reiniciado",
+            "success"
+        )
+        
+        flash('O agendador de tarefas foi reiniciado com sucesso.', 'success')
+        return redirect(url_for('automation.monitoring'))
+    except Exception as e:
+        logger.error(f"Erro ao reiniciar agendador: {str(e)}")
+        flash(f'Erro ao reiniciar agendador: {str(e)}', 'danger')
+        return redirect(url_for('automation.monitoring'))
 
 @automation_bp.route('/schedule_automation', methods=['POST'])
 @login_required

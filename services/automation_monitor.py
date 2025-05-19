@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Any
 
 from app import db
@@ -150,7 +150,7 @@ class AutomationMonitor:
         recent_failures = SchedulerLog.query.filter_by(
             log_type=LogType.ERROR
         ).filter(
-            SchedulerLog.created_at >= datetime.utcnow() - datetime.timedelta(hours=24)
+            SchedulerLog.created_at >= datetime.utcnow() - timedelta(hours=24)
         ).count()
         
         if recent_failures > 5:
