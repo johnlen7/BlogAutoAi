@@ -184,6 +184,25 @@
     </div>
 </div>
 
+<!-- Publish Confirmation Modal -->
+<div class="modal fade" id="confirmPublishModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to publish this article immediately?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmPublish">Publish</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Schedule Modal -->
 <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -271,11 +290,29 @@
             };
         }
         
+        // Modificando o comportamento do botão de publicação para abrir o modal
         const publishBtn = document.getElementById('publishArticle');
         if (publishBtn) {
-            // Não vamos iniciar a animação de carregamento ainda,
-            // pois precisamos mostrar a confirmação primeiro
-            // A animação será mostrada somente após o usuário confirmar a publicação
+            publishBtn.setAttribute('data-bs-toggle', 'modal');
+            publishBtn.setAttribute('data-bs-target', '#confirmPublishModal');
+        }
+        
+        // Configurando o botão de confirmação no modal para publicar e mostrar a animação
+        const confirmPublishBtn = document.getElementById('confirmPublish');
+        if (confirmPublishBtn) {
+            confirmPublishBtn.addEventListener('click', function() {
+                // Fechar o modal de confirmação
+                const modal = bootstrap.Modal.getInstance(document.getElementById('confirmPublishModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Mostrar a animação de carregamento
+                window.loadingAnimations.show('Publicando artigo no WordPress...', 'publish');
+                
+                // Executar a função de publicação
+                publishArticle();
+            });
         }
         
         const scheduleBtn = document.getElementById('scheduleArticle');
