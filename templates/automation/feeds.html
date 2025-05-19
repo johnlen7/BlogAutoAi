@@ -153,16 +153,16 @@
             </div>
             <div class="modal-body">
                 <form id="feedForm">
-                    <input type="hidden" id="feedId" value="">
+                    <input type="hidden" id="feedId" name="id" value="">
                     
                     <div class="mb-3">
                         <label for="feedName" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Nome do Feed{% else %}Feed Name{% endif %}</label>
-                        <input type="text" class="form-control" id="feedName" required>
+                        <input type="text" class="form-control" id="feedName" name="name" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="feedUrl" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}URL do Feed RSS{% else %}RSS Feed URL{% endif %}</label>
-                        <input type="url" class="form-control" id="feedUrl" required>
+                        <input type="url" class="form-control" id="feedUrl" name="url" required>
                         <div class="form-text">
                             {% if session.get('language', 'pt_BR') == 'pt_BR' %}
                             Exemplo: https://example.com/feed.xml ou https://example.com/rss
@@ -174,7 +174,7 @@
                     
                     <div class="mb-3">
                         <label for="feedTheme" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Tema Associado{% else %}Associated Theme{% endif %}</label>
-                        <select class="form-select" id="feedTheme" required>
+                        <select class="form-select" id="feedTheme" name="theme_id" required>
                             <option value="">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Selecionar tema{% else %}Select theme{% endif %}</option>
                             {% for theme in themes %}
                             <option value="{{ theme.id }}">{{ theme.name }}</option>
@@ -193,7 +193,7 @@
                     
                     <div class="mb-3">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="feedActive" checked>
+                            <input class="form-check-input" type="checkbox" id="feedActive" name="is_active" value="true" checked>
                             <label class="form-check-label" for="feedActive">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Ativar feed{% else %}Activate feed{% endif %}</label>
                         </div>
                     </div>

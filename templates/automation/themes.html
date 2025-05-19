@@ -134,7 +134,7 @@ Finanças,investimentos economia dinheiro poupança,1</pre>
                     
                     <div class="mb-3">
                         <label for="themePriority" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Prioridade{% else %}Priority{% endif %}</label>
-                        <input type="number" class="form-control" id="themePriority" min="0" value="0">
+                        <input type="number" class="form-control" id="themePriority" name="priority" min="0" value="0">
                         <div class="form-text">
                             {% if session.get('language', 'pt_BR') == 'pt_BR' %}
                             Quanto maior o número, maior a prioridade. Os temas com maior prioridade serão usados primeiro.
@@ -146,7 +146,7 @@ Finanças,investimentos economia dinheiro poupança,1</pre>
                     
                     <div class="mb-3">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="themeActive" checked>
+                            <input class="form-check-input" type="checkbox" id="themeActive" name="is_active" value="true" checked>
                             <label class="form-check-label" for="themeActive">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Ativar tema{% else %}Activate theme{% endif %}</label>
                         </div>
                     </div>
