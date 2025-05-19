@@ -364,35 +364,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Enviar dados para o backend
-        fetch('/automation/settings', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                is_active: isActive,
-                post_interval_hours: postInterval,
-                min_word_count: minWordCount,
-                max_word_count: maxWordCount,
-                timezone_offset: timezoneOffset,
-                active_hours_start: activeHoursStart,
-                active_hours_end: activeHoursEnd,
-                wordpress_config_id: wordpressConfig
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.message || '{{ "Ocorreu um erro. Tente novamente." if session.get("language", "pt_BR") == "pt_BR" else "An error occurred. Please try again." }}');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('{{ "Ocorreu um erro. Tente novamente." if session.get("language", "pt_BR") == "pt_BR" else "An error occurred. Please try again." }}');
-        });
+        // Enviar o formulário normalmente
+        document.getElementById('automationSettingsForm').submit();
     });
     
     // Agendar geração manual
