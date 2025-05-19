@@ -133,7 +133,7 @@
                         </div>
                         <div class="col-md-6">
                             <a href="{{ url_for('dashboard.article_list') }}?status=scheduled" class="btn btn-outline-primary d-block p-3">
-                                <i class="fas fa-calendar-alt me-2"></i> View Scheduled
+                                <i class="fas fa-calendar-alt me-2"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Ver Agendados{% else %}View Scheduled{% endif %}
                             </a>
                         </div>
                     </div>
@@ -146,7 +146,7 @@
             <!-- Recent Articles -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Recent Articles</h5>
+                    <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Artigos Recentes{% else %}Recent Articles{% endif %}</h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
@@ -165,8 +165,8 @@
                         {% else %}
                             <div class="list-group-item text-center py-4">
                                 <i class="fas fa-newspaper text-muted mb-2" style="font-size: 2rem;"></i>
-                                <p class="mb-0">No articles yet</p>
-                                <a href="{{ url_for('article.create') }}" class="btn btn-sm btn-primary mt-2">Create your first article</a>
+                                <p class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Nenhum artigo ainda{% else %}No articles yet{% endif %}</p>
+                                <a href="{{ url_for('article.create') }}" class="btn btn-sm btn-primary mt-2">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Crie seu primeiro artigo{% else %}Create your first article{% endif %}</a>
                             </div>
                         {% endif %}
                     </div>
@@ -176,7 +176,7 @@
             <!-- Scheduled Articles -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Upcoming Publications</h5>
+                    <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Próximas Publicações{% else %}Upcoming Publications{% endif %}</h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
@@ -199,8 +199,8 @@
                         {% else %}
                             <div class="list-group-item text-center py-4">
                                 <i class="fas fa-calendar-alt text-muted mb-2" style="font-size: 2rem;"></i>
-                                <p class="mb-0">No scheduled articles</p>
-                                <small class="text-muted d-block mt-1">Schedule articles to automate your publishing</small>
+                                <p class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Nenhum artigo agendado{% else %}No scheduled articles{% endif %}</p>
+                                <small class="text-muted d-block mt-1">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Agende artigos para automatizar suas publicações{% else %}Schedule articles to automate your publishing{% endif %}</small>
                             </div>
                         {% endif %}
                     </div>
@@ -210,7 +210,7 @@
             <!-- Scheduler Status -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Scheduler Status</h5>
+                    <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Status do Agendador{% else %}Scheduler Status{% endif %}</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-3">
@@ -220,23 +220,23 @@
                             </span>
                         </div>
                         <div>
-                            <h6 class="mb-0">Publishing Robot</h6>
-                            <small class="text-muted">Automatic background publisher</small>
+                            <h6 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Robô de Publicação{% else %}Publishing Robot{% endif %}</h6>
+                            <small class="text-muted">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Publicador automático em segundo plano{% else %}Automatic background publisher{% endif %}</small>
                         </div>
                     </div>
                     
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>Next check:</span>
-                        <span class="text-muted" id="nextSchedulerRun">{{ scheduler_status.next_run or 'Not scheduled' }}</span>
+                        <span>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Próxima verificação:{% else %}Next check:{% endif %}</span>
+                        <span class="text-muted" id="nextSchedulerRun">{{ scheduler_status.next_run or (session.get('language', 'pt_BR') == 'pt_BR' and 'Não agendado' or 'Not scheduled') }}</span>
                     </div>
                     
                     <div class="d-flex justify-content-between align-items-center">
-                        <span>Active jobs:</span>
+                        <span>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Tarefas ativas:{% else %}Active jobs:{% endif %}</span>
                         <span class="text-muted">{{ scheduler_status.jobs }}</span>
                     </div>
                     
                     <div class="mt-3 text-center">
-                        <p class="small text-muted mb-0">This system automatically checks for and publishes scheduled articles</p>
+                        <p class="small text-muted mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Este sistema verifica e publica automaticamente os artigos agendados{% else %}This system automatically checks for and publishes scheduled articles{% endif %}</p>
                     </div>
                 </div>
             </div>
