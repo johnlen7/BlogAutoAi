@@ -33,9 +33,14 @@
                                 <input type="text" class="form-control" id="articleTitle" placeholder="Article Title" value="{{ article.title }}">
                             </div>
                             
+                            <!-- Seletor de tom do conteúdo -->
+                            <div class="mb-3" id="mood-selector-container">
+                                <!-- O componente mood-selector.js será renderizado aqui -->
+                            </div>
+                            
                             <div class="mb-3">
                                 <label class="form-label">Content</label>
-                                <div id="editor" class="editor-container"></div>
+                                <div id="editor" class="editor-container collaborative" data-username="{{ current_user.username }}"></div>
                             </div>
                         </div>
                     </div>
@@ -232,6 +237,9 @@
 <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar as funcionalidades avançadas
+        initCollaborativeFeatures();
+        
         // Featured image preview
         const featuredImageUrl = document.getElementById('featuredImageUrl');
         const imagePreview = document.getElementById('imagePreview');
@@ -245,6 +253,56 @@
                 } else {
                     imagePreview.classList.add('d-none');
                 }
+            });
+        }
+        
+        // Adicionar event listeners para os botões com animações de carregamento
+        const saveArticleBtn = document.getElementById('saveArticle');
+        if (saveArticleBtn) {
+            const originalClick = saveArticleBtn.onclick;
+            saveArticleBtn.onclick = function(e) {
+                window.loadingAnimations.show('Salvando alterações...', 'generate');
+                if (originalClick) {
+                    return originalClick.call(this, e);
+                }
+            };
+        }
+        
+        const publishBtn = document.getElementById('publishArticle');
+        if (publishBtn) {
+            const originalClick = publishBtn.onclick;
+            publishBtn.onclick = function(e) {
+                window.loadingAnimations.show('Publicando artigo no WordPress...', 'publish');
+                if (originalClick) {
+                    return originalClick.call(this, e);
+                }
+            };
+        }
+        
+        const scheduleBtn = document.getElementById('scheduleArticle');
+        if (scheduleBtn) {
+            const originalClick = scheduleBtn.onclick;
+            scheduleBtn.onclick = function(e) {
+                // A animação não é mostrada aqui porque temos que mostrar o modal primeiro
+                if (originalClick) {
+                    return originalClick.call(this, e);
+                }
+            };
+        }
+        
+        // Form de agendamento
+        const scheduleForm = document.getElementById('scheduleForm');
+        if (scheduleForm) {
+            scheduleForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                window.loadingAnimations.show('Configurando o agendamento...', 'schedule');
+                // O código original do submit continuará após fecharmos o modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                // Continuamos com o envio do formulário
+                schedulePublication();
             });
         }
         
@@ -273,5 +331,87 @@
         });
         {% endif %}
     });
+    
+    // Inicializa as funcionalidades de edição colaborativa e assistência ao escritor
+    function initCollaborativeFeatures() {
+        // 1. Inicializar edição colaborativa para o editor Quill
+        const editorElement = document.querySelector('.editor-container.collaborative');
+        if (editorElement && window.quill) {
+            // Adaptar o editor Quill para colaboração
+            // Observação: Esta é uma simulação de colaboração sem servidor real
+            editorElement.collaborativeEditor = new CollaborativeEditor(editorElement, {
+                userName: editorElement.dataset.username || 'Usuário',
+                userId: 'user_' + Math.floor(Math.random() * 1000)
+            });
+            
+            // Conectar o editor Quill com o CollaborativeEditor
+            window.quill.on('text-change', function() {
+                if (editorElement.collaborativeEditor) {
+                    editorElement.collaborativeEditor.handleInput();
+                }
+            });
+        }
+        
+        // 2. Certificar-se de que as dicas rápidas estão ativadas
+        if (window.quickTips) {
+            setTimeout(() => {
+                window.quickTips.open();
+            }, 2000);
+        }
+    }
+    
+    // Função para agendar a publicação
+    function schedulePublication() {
+        // Obter dados do formulário
+        const articleId = document.getElementById('scheduleArticleId').value;
+        const scheduleDate = document.getElementById('scheduleDate').value;
+        const scheduleTime = document.getElementById('scheduleTime').value;
+        const repeatSchedule = document.getElementById('repeatSchedule').value;
+        
+        // Construir payload
+        const data = {
+            article_id: articleId,
+            schedule_date: scheduleDate,
+            schedule_time: scheduleTime,
+            repeat: repeatSchedule
+        };
+        
+        // Enviar solicitação
+        fetch('/api/schedule_article', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Completar animação de progresso
+            if (window.loadingAnimations) {
+                window.loadingAnimations.completeProgress();
+            }
+            
+            if (data.success) {
+                // Mostrar mensagem de sucesso
+                setTimeout(() => {
+                    window.loadingAnimations.hide();
+                    // Redirecionar ou mostrar mensagem
+                    window.location.href = `/article/${articleId}?success=schedule`;
+                }, 1000);
+            } else {
+                // Mostrar erro
+                setTimeout(() => {
+                    window.loadingAnimations.hide();
+                    alert(`Erro ao agendar: ${data.error || 'Erro desconhecido'}`);
+                }, 1000);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            window.loadingAnimations.hide();
+            alert('Ocorreu um erro ao agendar a publicação.');
+        });
+    }
 </script>
 {% endblock %}

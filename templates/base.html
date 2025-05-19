@@ -178,5 +178,11 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     
     {% block extra_js %}{% endblock %}
+    
+    <!-- Scripts personalizados para funcionalidades avançadas -->
+    <script src="{{ url_for('static', filename='js/collaborative-editing.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/mood-selector.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/quick-tips.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/loading-animations.js') }}"></script>
 </body>
 </html>
