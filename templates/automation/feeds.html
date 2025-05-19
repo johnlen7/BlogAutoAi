@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if session.get('language', 'pt_BR') == 'pt_BR' %}Feeds RSS - BlogAuto AI{% else %}RSS Feeds - BlogAuto AI{% endif %}{% endblock %}
+
+{% block page_title %}{% if session.get('language', 'pt_BR') == 'pt_BR' %}Feeds RSS{% else %}RSS Feeds{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Seus Feeds RSS{% else %}Your RSS Feeds{% endif %}</h5>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeedModal">
+                    <i class="fas fa-plus-circle me-1"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Adicionar Feed{% else %}Add Feed{% endif %}
+                </button>
+            </div>
+            <div class="card-body p-0">
+                {% if feeds %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Nome{% else %}Name{% endif %}</th>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}URL{% else %}URL{% endif %}</th>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Tema{% else %}Theme{% endif %}</th>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Última Atualização{% else %}Last Update{% endif %}</th>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Status{% else %}Status{% endif %}</th>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Ações{% else %}Actions{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feed in feeds %}
+                            <tr>
+                                <td>{{ feed.name }}</td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;">
+                                        <a href="{{ feed.url }}" target="_blank">{{ feed.url }}</a>
+                                    </div>
+                                </td>
+                                <td>{{ feed.theme.name }}</td>
+                                <td>
+                                    {% if feed.last_fetch %}
+                                        {{ feed.last_fetch.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                        <span class="text-muted">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Nunca{% else %}Never{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if feed.is_active %}
+                                    <span class="badge bg-success">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Ativo{% else %}Active{% endif %}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Inativo{% else %}Inactive{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary edit-feed" data-feed-id="{{ feed.id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success fetch-feed" data-feed-id="{{ feed.id }}">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-feed" data-feed-id="{{ feed.id }}" data-feed-name="{{ feed.name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-rss text-muted mb-3" style="font-size: 3rem;"></i>
+                    <h5>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Nenhum feed encontrado{% else %}No feeds found{% endif %}</h5>
+                    <p class="text-muted mb-3">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Adicione feeds RSS para começar a automação baseada em notícias{% else %}Add RSS feeds to start news-based automation{% endif %}</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeedModal">
+                        {% if session.get('language', 'pt_BR') == 'pt_BR' %}Adicionar Primeiro Feed{% else %}Add First Feed{% endif %}
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% if feeds and news_items %}
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Últimas Notícias Coletadas{% else %}Latest News Items{% endif %}</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Título{% else %}Title{% endif %}</th>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Feed{% else %}Feed{% endif %}</th>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Data de Publicação{% else %}Published Date{% endif %}</th>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Processado{% else %}Processed{% endif %}</th>
+                                <th>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Ações{% else %}Actions{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in news_items %}
+                            <tr>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 300px;">
+                                        <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
+                                    </div>
+                                </td>
+                                <td>{{ item.rss_feed.name }}</td>
+                                <td>
+                                    {% if item.published_date %}
+                                        {{ item.published_date.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                        <span class="text-muted">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Desconhecida{% else %}Unknown{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.is_processed %}
+                                    <span class="badge bg-success">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Sim{% else %}Yes{% endif %}</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Não{% else %}No{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary process-item" data-item-id="{{ item.id }}" {% if item.is_processed %}disabled{% endif %}>
+                                            <i class="fas fa-magic"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Processar{% else %}Process{% endif %}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para adicionar/editar feed -->
+<div class="modal fade" id="addFeedModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="feedModalTitle">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Adicionar Feed RSS{% else %}Add RSS Feed{% endif %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="feedForm">
+                    <input type="hidden" id="feedId" value="">
+                    
+                    <div class="mb-3">
+                        <label for="feedName" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Nome do Feed{% else %}Feed Name{% endif %}</label>
+                        <input type="text" class="form-control" id="feedName" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="feedUrl" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}URL do Feed RSS{% else %}RSS Feed URL{% endif %}</label>
+                        <input type="url" class="form-control" id="feedUrl" required>
+                        <div class="form-text">
+                            {% if session.get('language', 'pt_BR') == 'pt_BR' %}
+                            Exemplo: https://example.com/feed.xml ou https://example.com/rss
+                            {% else %}
+                            Example: https://example.com/feed.xml or https://example.com/rss
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="feedTheme" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Tema Associado{% else %}Associated Theme{% endif %}</label>
+                        <select class="form-select" id="feedTheme" required>
+                            <option value="">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Selecionar tema{% else %}Select theme{% endif %}</option>
+                            {% for theme in themes %}
+                            <option value="{{ theme.id }}">{{ theme.name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not themes %}
+                        <div class="text-danger mt-2">
+                            {% if session.get('language', 'pt_BR') == 'pt_BR' %}
+                            Nenhum tema disponível. <a href="{{ url_for('automation.themes_list') }}">Crie um tema primeiro.</a>
+                            {% else %}
+                            No themes available. <a href="{{ url_for('automation.themes_list') }}">Create a theme first.</a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="feedActive" checked>
+                            <label class="form-check-label" for="feedActive">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Ativar feed{% else %}Activate feed{% endif %}</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Cancelar{% else %}Cancel{% endif %}</button>
+                <button type="button" id="saveFeed" class="btn btn-primary" {% if not themes %}disabled{% endif %}>{% if session.get('language', 'pt_BR') == 'pt_BR' %}Salvar{% else %}Save{% endif %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Salvar feed
+    document.getElementById('saveFeed').addEventListener('click', function() {
+        const feedId = document.getElementById('feedId').value;
+        const feedName = document.getElementById('feedName').value;
+        const feedUrl = document.getElementById('feedUrl').value;
+        const feedTheme = document.getElementById('feedTheme').value;
+        const feedActive = document.getElementById('feedActive').checked;
+        
+        if (!feedName || !feedUrl || !feedTheme) {
+            alert('{{ "Preencha todos os campos obrigatórios" if session.get("language", "pt_BR") == "pt_BR" else "Please fill in all required fields" }}');
+            return;
+        }
+        
+        // Validar URL
+        try {
+            new URL(feedUrl);
+        } catch (e) {
+            alert('{{ "URL inválida. Certifique-se de incluir http:// ou https://" if session.get("language", "pt_BR") == "pt_BR" else "Invalid URL. Make sure to include http:// or https://" }}');
+            return;
+        }
+        
+        // Enviar dados para o backend
+        const url = feedId ? `/automation/feeds/${feedId}` : '/automation/feeds';
+        const method = feedId ? 'PUT' : 'POST';
+        
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: feedName,
+                url: feedUrl,
+                theme_id: feedTheme,
+                is_active: feedActive
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || '{{ "Ocorreu um erro. Tente novamente." if session.get("language", "pt_BR") == "pt_BR" else "An error occurred. Please try again." }}');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('{{ "Ocorreu um erro. Tente novamente." if session.get("language", "pt_BR") == "pt_BR" else "An error occurred. Please try again." }}');
+        });
+    });
+    
+    // Editar feed (delegação de eventos)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-feed')) {
+            const button = e.target.closest('.edit-feed');
+            const feedId = button.dataset.feedId;
+            
+            // Carregar dados do feed pelo ID
+            fetch(`/automation/feeds/${feedId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const feed = data.feed;
+                        document.getElementById('feedId').value = feed.id;
+                        document.getElementById('feedName').value = feed.name;
+                        document.getElementById('feedUrl').value = feed.url;
+                        document.getElementById('feedTheme').value = feed.theme_id;
+                        document.getElementById('feedActive').checked = feed.is_active;
+                        
+                        // Atualizar título do modal
+                        document.getElementById('feedModalTitle').textContent = '{{ "Editar Feed RSS" if session.get("language", "pt_BR") == "pt_BR" else "Edit RSS Feed" }}';
+                        
+                        // Abrir modal
+                        new bootstrap.Modal(document.getElementById('addFeedModal')).show();
+                    } else {
+                        alert(data.message || '{{ "Não foi possível carregar os dados do feed" if session.get("language", "pt_BR") == "pt_BR" else "Could not load feed data" }}');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('{{ "Ocorreu um erro ao carregar os dados do feed" if session.get("language", "pt_BR") == "pt_BR" else "An error occurred while loading feed data" }}');
+                });
+        }
+    });
+    
+    // Atualizar feed (buscar novas notícias)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.fetch-feed')) {
+            const button = e.target.closest('.fetch-feed');
+            const feedId = button.dataset.feedId;
+            
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+            
+            fetch(`/automation/feeds/${feedId}/fetch`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || '{{ "Feed atualizado com sucesso" if session.get("language", "pt_BR") == "pt_BR" else "Feed updated successfully" }}');
+                    window.location.reload();
+                } else {
+                    alert(data.message || '{{ "Ocorreu um erro ao atualizar o feed" if session.get("language", "pt_BR") == "pt_BR" else "An error occurred while updating the feed" }}');
+                    button.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('{{ "Ocorreu um erro ao atualizar o feed" if session.get("language", "pt_BR") == "pt_BR" else "An error occurred while updating the feed" }}');
+                button.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                button.disabled = false;
+            });
+        }
+    });
+    
+    // Excluir feed (delegação de eventos)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-feed')) {
+            const button = e.target.closest('.delete-feed');
+            const feedId = button.dataset.feedId;
+            const feedName = button.dataset.feedName;
+            
+            if (confirm('{{ "Tem certeza que deseja excluir o feed" if session.get("language", "pt_BR") == "pt_BR" else "Are you sure you want to delete the feed" }}' + ' "' + feedName + '"?')) {
+                fetch(`/automation/feeds/${feedId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || '{{ "Ocorreu um erro ao excluir o feed" if session.get("language", "pt_BR") == "pt_BR" else "An error occurred while deleting the feed" }}');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('{{ "Ocorreu um erro ao excluir o feed" if session.get("language", "pt_BR") == "pt_BR" else "An error occurred while deleting the feed" }}');
+                });
+            }
+        }
+    });
+    
+    // Processar item de notícia (delegação de eventos)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.process-item')) {
+            const button = e.target.closest('.process-item');
+            const itemId = button.dataset.itemId;
+            
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {{ "Processando" if session.get("language", "pt_BR") == "pt_BR" else "Processing" }}';
+            button.disabled = true;
+            
+            fetch(`/automation/news/${itemId}/process`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || '{{ "Item processado com sucesso" if session.get("language", "pt_BR") == "pt_BR" else "Item processed successfully" }}');
+                    window.location.reload();
+                } else {
+                    alert(data.message || '{{ "Ocorreu um erro ao processar o item" if session.get("language", "pt_BR") == "pt_BR" else "An error occurred while processing the item" }}');
+                    button.innerHTML = '<i class="fas fa-magic"></i> {{ "Processar" if session.get("language", "pt_BR") == "pt_BR" else "Process" }}';
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('{{ "Ocorreu um erro ao processar o item" if session.get("language", "pt_BR") == "pt_BR" else "An error occurred while processing the item" }}');
+                button.innerHTML = '<i class="fas fa-magic"></i> {{ "Processar" if session.get("language", "pt_BR") == "pt_BR" else "Process" }}';
+                button.disabled = false;
+            });
+        }
+    });
+    
+    // Modal de adicionar feed - resetar formulário quando modal for fechado
+    document.getElementById('addFeedModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('feedForm').reset();
+        document.getElementById('feedId').value = '';
+        document.getElementById('feedModalTitle').textContent = '{{ "Adicionar Feed RSS" if session.get("language", "pt_BR") == "pt_BR" else "Add RSS Feed" }}';
+    });
+});
+</script>
+{% endblock %}
