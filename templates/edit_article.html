@@ -240,6 +240,9 @@
         // Inicializar as funcionalidades avançadas
         initCollaborativeFeatures();
         
+        // Inicializar animações de carregamento
+        window.loadingAnimations = new LoadingAnimations();
+        
         // Featured image preview
         const featuredImageUrl = document.getElementById('featuredImageUrl');
         const imagePreview = document.getElementById('imagePreview');
