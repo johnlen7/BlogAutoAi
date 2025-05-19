@@ -94,12 +94,12 @@
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="articleTitle" class="form-label">Title</label>
-                                <input type="text" class="form-control" id="articleTitle" placeholder="Article Title">
+                                <label for="articleTitle" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Título{% else %}Title{% endif %}</label>
+                                <input type="text" class="form-control" id="articleTitle" placeholder="{% if session.get('language', 'pt_BR') == 'pt_BR' %}Título do Artigo{% else %}Article Title{% endif %}">
                             </div>
                             
                             <div class="mb-3">
-                                <label class="form-label">Content</label>
+                                <label class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Conteúdo{% else %}Content{% endif %}</label>
                                 <div id="editor" class="editor-container"></div>
                             </div>
                         </div>
@@ -109,32 +109,32 @@
                 <div class="col-md-4">
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">SEO Settings</h5>
+                            <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Configurações SEO{% else %}SEO Settings{% endif %}</h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="metaDescription" class="form-label">Meta Description</label>
-                                <textarea class="form-control" id="metaDescription" rows="3" placeholder="Brief description for search engines"></textarea>
+                                <label for="metaDescription" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Meta Descrição{% else %}Meta Description{% endif %}</label>
+                                <textarea class="form-control" id="metaDescription" rows="3" placeholder="{% if session.get('language', 'pt_BR') == 'pt_BR' %}Breve descrição para motores de busca{% else %}Brief description for search engines{% endif %}"></textarea>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="articleSlug" class="form-label">Slug</label>
-                                <input type="text" class="form-control" id="articleSlug" placeholder="article-url-slug">
+                                <input type="text" class="form-control" id="articleSlug" placeholder="{% if session.get('language', 'pt_BR') == 'pt_BR' %}slug-url-do-artigo{% else %}article-url-slug{% endif %}">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="articleTags" class="form-label">Tags</label>
-                                <input type="text" class="form-control" id="articleTags" placeholder="tag1, tag2, tag3">
+                                <input type="text" class="form-control" id="articleTags" placeholder="{% if session.get('language', 'pt_BR') == 'pt_BR' %}tag1, tag2, tag3{% else %}tag1, tag2, tag3{% endif %}">
                             </div>
                             
                             <div class="mb-3">
-                                <label for="articleCategories" class="form-label">Categories</label>
+                                <label for="articleCategories" class="form-label">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Categorias{% else %}Categories{% endif %}</label>
                                 <div class="input-group">
                                     <select class="form-select" id="categorySelector">
-                                        <option value="">Select or type a category</option>
+                                        <option value="">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Selecione ou digite uma categoria{% else %}Select or type a category{% endif %}</option>
                                     </select>
                                     <button class="btn btn-outline-secondary" type="button" id="addCategoryBtn">
-                                        <i class="fas fa-plus"></i> Add
+                                        <i class="fas fa-plus"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Adicionar{% else %}Add{% endif %}
                                     </button>
                                 </div>
                                 <div class="mt-2" id="selectedCategories"></div>
@@ -145,7 +145,7 @@
                     
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Featured Image</h5>
+                            <h5 class="mb-0">{% if session.get('language', 'pt_BR') == 'pt_BR' %}Imagem Destacada{% else %}Featured Image{% endif %}</h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
