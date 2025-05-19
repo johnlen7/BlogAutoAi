@@ -129,7 +129,16 @@
                             
                             <div class="mb-3">
                                 <label for="articleCategories" class="form-label">Categories</label>
-                                <input type="text" class="form-control" id="articleCategories" placeholder="category1, category2">
+                                <div class="input-group">
+                                    <select class="form-select" id="categorySelector">
+                                        <option value="">Select or type a category</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" id="addCategoryBtn">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div class="mt-2" id="selectedCategories"></div>
+                                <input type="hidden" class="form-control" id="articleCategories">
                             </div>
                         </div>
                     </div>

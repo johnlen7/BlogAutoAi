@@ -51,6 +51,50 @@ def create():
         has_claude=bool(claude_key)
     )
 
+@article_bp.route('/api/wordpress/categories', methods=['GET'])
+@login_required
+def get_wordpress_categories():
+    """API endpoint to get WordPress categories"""
+    # Get WordPress configuration
+    config_id = request.args.get('config_id')
+    
+    if not config_id:
+        # Get default config
+        config = WordPressConfig.query.filter_by(
+            user_id=current_user.id,
+            is_default=True
+        ).first()
+        
+        if not config:
+            # Get any config
+            config = WordPressConfig.query.filter_by(user_id=current_user.id).first()
+            
+        if not config:
+            return jsonify({
+                'success': False,
+                'message': 'No WordPress configuration found.'
+            }), 404
+    else:
+        # Get specified config
+        config = WordPressConfig.query.get(config_id)
+        
+        if not config or config.user_id != current_user.id:
+            return jsonify({
+                'success': False,
+                'message': 'WordPress configuration not found or access denied.'
+            }), 403
+    
+    # Initialize WordPress service
+    wp_service = WordPressService(config)
+    
+    # Get categories
+    categories = wp_service.get_categories()
+    
+    return jsonify({
+        'success': True,
+        'categories': categories
+    })
+
 @article_bp.route('/api/generate-content', methods=['POST'])
 @login_required
 def generate_content():
