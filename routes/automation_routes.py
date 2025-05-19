@@ -710,14 +710,21 @@ def schedule_automation():
     
     try:
         # Preparar agendamento
-        num_articles = int(data.get('num_articles', 5))
-        interval_hours = int(data.get('interval', 6))  # Nome do campo ajustado
+        try:
+            num_articles = int(data.get('num_articles', 5))
+        except (ValueError, TypeError):
+            num_articles = 5
+            
+        try:
+            interval_hours = int(data.get('interval', 6))  # Nome do campo ajustado
+        except (ValueError, TypeError):
+            interval_hours = 6
         
         # Pegar a data/hora de início
         schedule_date = data.get('schedule_date')
-        schedule_time = data.get('schedule_time')
+        schedule_time = data.get('schedule_time', '08:00')
         
-        if not schedule_date or not schedule_time:
+        if not schedule_date:
             flash('Data e hora de início não fornecidas. Por favor, preencha todos os campos.', 'danger')
             return redirect(url_for('automation.index'))
         

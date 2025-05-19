@@ -116,7 +116,13 @@
                                         <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
                                     </div>
                                 </td>
-                                <td>{{ item.rss_feed.name }}</td>
+                                <td>
+                                    {% for feed in feeds %}
+                                        {% if feed.id == item.rss_feed_id %}
+                                            {{ feed.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
                                 <td>
                                     {% if item.published_date %}
                                         {{ item.published_date.strftime('%d/%m/%Y %H:%M') }}
