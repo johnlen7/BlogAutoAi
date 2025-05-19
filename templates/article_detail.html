@@ -145,7 +145,7 @@
             </div>
             <div class="card-footer text-end">
                 <div class="btn-group">
-                    <a href="{{ url_for('api.export_article', article_id=article.id, format_type='markdown') }}" class="btn btn-sm btn-outline-secondary export-article" data-article-id="{{ article.id }}" data-format="markdown">
+                    <a href="{{ url_for('article.export_article', article_id=article.id, format_type='markdown') }}" class="btn btn-sm btn-outline-secondary export-article" data-article-id="{{ article.id }}" data-format="markdown">
                         <i class="fas fa-file-alt me-1"></i> Export as Markdown
                     </a>
                 </div>
