@@ -96,49 +96,107 @@ function setupGenerationListeners() {
  * @param {string} model - The AI model to use (claude or gpt)
  */
 function generateArticleContent(type, value, model) {
-    // Show loading state
-    generatingContent = true;
-    const generateBtn = document.getElementById('generateContent');
-    const originalBtnText = generateBtn.innerHTML;
-    generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
-    generateBtn.disabled = true;
+    // Mostrar confirmação usando SweetAlert2 antes de gerar
+    const confirmMsg = document.documentElement.lang === 'en' ? 
+        `Generate content using ${model.toUpperCase()} from ${type}: "${value}"?` : 
+        `Gerar conteúdo usando ${model.toUpperCase()} a partir de ${type === 'keyword' ? 'palavra-chave' : 'URL'}: "${value}"?`;
+    
+    Swal.fire({
+        title: document.documentElement.lang === 'en' ? 'Confirm Generation' : 'Confirmar Geração',
+        text: confirmMsg,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: document.documentElement.lang === 'en' ? 'Yes, generate' : 'Sim, gerar',
+        cancelButtonText: document.documentElement.lang === 'en' ? 'Cancel' : 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Mostrar animação de geração
+            Swal.fire({
+                title: document.documentElement.lang === 'en' ? 'Generating Content' : 'Gerando Conteúdo',
+                html: document.documentElement.lang === 'en' ? 
+                    `Creating article with ${model.toUpperCase()}...<br>This may take up to 2 minutes` : 
+                    `Criando artigo com ${model.toUpperCase()}...<br>Isso pode levar até 2 minutos`,
+                timerProgressBar: true,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
-    // Request data
-    const requestData = {
-        type: type,
-        value: value,
-        model: model
-    };
+            // Update state
+            generatingContent = true;
+            const generateBtn = document.getElementById('generateContent');
+            generateBtn.disabled = true;
 
-    // Send AJAX request to generate content
-    fetch('/api/generate-content', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-    })
+            // Request data
+            const requestData = {
+                type: type,
+                value: value,
+                model: model
+            };
+
+            // Send AJAX request to generate content
+            fetch('/api/generate-content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
     .then(response => response.json())
     .then(data => {
+        // Close SweetAlert loading
+        Swal.close();
+        
         // Reset button state
-        generateBtn.innerHTML = originalBtnText;
-        generateBtn.disabled = false;
+        const generateBtn = document.getElementById('generateContent');
+        if (generateBtn) {
+            generateBtn.disabled = false;
+        }
         generatingContent = false;
 
         if (data.success) {
+            // Mostrar mensagem de sucesso
+            Swal.fire({
+                icon: 'success',
+                title: document.documentElement.lang === 'en' ? 'Success!' : 'Sucesso!',
+                text: document.documentElement.lang === 'en' ? 'Content successfully generated!' : 'Conteúdo gerado com sucesso!',
+                confirmButtonText: 'OK'
+            });
+            
             // Populate form fields with generated content
             populateArticleForm(data.content);
-            showToast('Content generated successfully!', 'success');
         } else {
-            showToast(data.message || 'Error generating content. Please try again.', 'danger');
+            Swal.fire({
+                icon: 'error',
+                title: document.documentElement.lang === 'en' ? 'Error' : 'Erro',
+                text: data.message || (document.documentElement.lang === 'en' ? 
+                    'Error generating content. Please try again.' : 
+                    'Erro ao gerar conteúdo. Por favor, tente novamente.'),
+                confirmButtonText: 'OK'
+            });
         }
     })
     .catch(error => {
         console.error('Error generating content:', error);
-        generateBtn.innerHTML = originalBtnText;
-        generateBtn.disabled = false;
+        Swal.close();
+        
+        // Reset button state
+        const generateBtn = document.getElementById('generateContent');
+        if (generateBtn) {
+            generateBtn.disabled = false;
+        }
         generatingContent = false;
-        showToast('Error generating content. Please try again.', 'danger');
+        
+        Swal.fire({
+            icon: 'error',
+            title: document.documentElement.lang === 'en' ? 'Error' : 'Erro',
+            text: document.documentElement.lang === 'en' ? 
+                'Error connecting to AI service. Please verify your API keys and try again.' : 
+                'Erro ao conectar ao serviço de IA. Verifique suas chaves de API e tente novamente.',
+            confirmButtonText: 'OK'
+        });
     });
 }
 
