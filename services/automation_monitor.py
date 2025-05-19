@@ -38,23 +38,9 @@ class AutomationMonitor:
             # Criar entrada no log do scheduler
             log = SchedulerLog(
                 message=f"[{action_type.upper()}] {details}",
-                log_type=log_type
+                log_type=log_type,
+                created_at=datetime.utcnow()
             )
-            db.session.add(log)
-            db.session.commit()
-            logger.info(f"Evento registrado: {action_type} - {details}")
-        except Exception as e:
-            logger.error(f"Erro ao registrar evento: {str(e)}")
-            db.session.rollback()
-        log_type = LogType.SUCCESS if status == 'success' else LogType.ERROR
-        
-        log = SchedulerLog(
-            message=f"{action_type}: {details}",
-            log_type=log_type,
-            created_at=datetime.utcnow()
-        )
-        
-        try:
             db.session.add(log)
             db.session.commit()
             logger.info(f"Evento de automação registrado: {action_type} - {details}")

@@ -45,8 +45,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('automation.index') }}" class="nav-link {% if 'automation.' in request.endpoint %}active{% endif %}">
+                    <a href="{{ url_for('automation.index') }}" class="nav-link {% if request.endpoint == 'automation.index' %}active{% endif %}">
                         <i class="fas fa-robot"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Automação{% else %}Automation{% endif %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('automation.monitoring') }}" class="nav-link {% if request.endpoint == 'automation.monitoring' %}active{% endif %}">
+                        <i class="fas fa-chart-line"></i> {% if session.get('language', 'pt_BR') == 'pt_BR' %}Monitoramento{% else %}Monitoring{% endif %}
                     </a>
                 </li>
                 <li class="nav-item">
