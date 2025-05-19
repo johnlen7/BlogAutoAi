@@ -706,22 +706,34 @@ def restart_scheduler():
 @login_required
 def schedule_automation():
     """Agendar geração e publicação automática de artigos"""
-    data = request.form  # Usar form data para submissão de formulário HTML
+    if request.is_json:
+        data = request.json  # Obter dados JSON da requisição
+    else:
+        data = request.form  # Usar form data para submissão de formulário HTML
     
     if not data:
-        flash('Dados incompletos. Por favor preencha todos os campos.', 'danger')
-        return redirect(url_for('automation.index'))
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Dados incompletos. Por favor preencha todos os campos.'})
+        else:
+            flash('Dados incompletos. Por favor preencha todos os campos.', 'danger')
+            return redirect(url_for('automation.index'))
     
     # Verificar dados necessários
     schedule_type = data.get('content_type')
     if not schedule_type or schedule_type not in ['themes', 'rss']:
-        flash('Tipo de agendamento inválido. Escolha temas ou feeds RSS.', 'danger')
-        return redirect(url_for('automation.index'))
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Tipo de agendamento inválido. Escolha temas ou feeds RSS.'})
+        else:
+            flash('Tipo de agendamento inválido. Escolha temas ou feeds RSS.', 'danger')
+            return redirect(url_for('automation.index'))
     
     ai_model = data.get('ai_model')
     if not ai_model or ai_model not in ['claude', 'gpt']:
-        flash('Modelo de IA inválido. Escolha Claude ou GPT.', 'danger')
-        return redirect(url_for('automation.index'))
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Modelo de IA inválido. Escolha Claude ou GPT.'})
+        else:
+            flash('Modelo de IA inválido. Escolha Claude ou GPT.', 'danger')
+            return redirect(url_for('automation.index'))
     
     # Validar configurações de publicação
     settings = AutomationSettings.query.filter_by(user_id=current_user.id).first()

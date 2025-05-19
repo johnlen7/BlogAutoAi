@@ -398,19 +398,29 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Mostrar indicador de carregamento
+        Swal.fire({
+            title: '{{ "Agendando automação..." if session.get("language", "pt_BR") == "pt_BR" else "Scheduling automation..." }}',
+            html: '{{ "Configurando artigos para geração automática" if session.get("language", "pt_BR") == "pt_BR" else "Setting up articles for automatic generation" }}',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
         // Enviar dados para o backend
-        fetch('/automation/schedule', {
+        fetch('/automation/schedule_automation', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                schedule_type: scheduleType,
+                content_type: scheduleType,
                 ai_model: aiModel,
                 schedule_date: scheduleDate,
                 schedule_time: scheduleTime,
                 num_articles: numArticles,
-                interval_hours: interval,
+                interval: interval,
                 publish_immediately: publishImmediately
             })
         })
