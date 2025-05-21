@@ -6,7 +6,16 @@ class Config:
     SECRET_KEY = os.environ.get('SESSION_SECRET', 'dev_secret_key')
     
     # Database configuration
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///blogauto.db')
+    # Configuração para MySQL/MariaDB
+    DB_USER = os.environ.get('DB_USER', 'root')
+    DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
+    DB_HOST = os.environ.get('DB_HOST', 'localhost')
+    DB_PORT = os.environ.get('DB_PORT', '3306')
+    DB_NAME = os.environ.get('DB_NAME', 'blogauto')
+    
+    # Prioridade para DATABASE_URL se existir, caso contrário cria a URL MySQL
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 
+        f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # APScheduler configuration
