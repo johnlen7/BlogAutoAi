@@ -1,0 +1,51 @@
+A partir de agora, implemente as seguintes funcionalidades de criação automática de artigos de blog, considerando CI/CD, testes e desempenho:
+
+1. Geração de Artigo em 1 Clique  
+   - Adicione um botão “Gerar Artigo” que abre um modal para inserir tema e palavras-chave.  
+   - Crie uma Edge Function em Supabase que chame a API OpenAI (GPT-4) com function calling para retornar título, subtítulos e corpo em JSON.  
+   - No front, gere um novo componente <ArticleEditor> que receba essa resposta e renderize os blocos no editor WYSIWYG.
+
+2. Geração em Lote de Artigos  
+   - Monte um formulário para upload de CSV/JSON com múltiplos temas e keywords.  
+   - Enfileire jobs via Supabase Queue ou Edge Functions assíncronas.  
+   - Exiba status de processamento numa tabela em tempo real e envie notificação por e-mail (Resend) ou toast in-app quando cada artigo estiver pronto.
+
+3. Editor de Estrutura (Outline Editor)  
+   - Crie um componente de Outline usando DragDropContext (react-beautiful-dnd).  
+   - Ao clicar em “Gerar Outline”, dispare chamada à Edge Function que retorna seções e subtópicos.  
+   - Permita rearrastar itens, editar títulos e salvar no Supabase em tempo real.
+
+4. Humanização de Texto  
+   - Insira botão “Humanizar Texto” no editor.  
+   - Chame OpenAI com prompt para ajustar tom (formal, descontraído, persuasivo).  
+   - Substitua o conteúdo selecionado pelo texto refinado.
+
+5. Sugestões de Links Internos  
+   - Crie uma sidebar que consulte o banco de posts existentes via Supabase.  
+   - Exiba resultados filtrados por relevância e permita inserir hyperlink no texto.
+
+6. Sugestões de Links Externos  
+   - Integre API de autoridade (por exemplo, SerpAPI).  
+   - Ofereça dropdown de URLs recomendadas e insira marcações de referência.
+
+7. Central de Mídia (Media Hub)  
+   - Desenvolva uma nova rota `/media` com galeria de imagens, vídeos e infográficos armazenados no Supabase Storage.  
+   - Habilite upload múltiplo, tags e busca full-text.  
+   - Implemente botão “Inserir no Artigo” que injeta a mídia selecionada no editor.
+
+8. Integração “Connect to Web”  
+   - Use Edge Functions para buscar dados em APIs externas (estatísticas, cotações, notícias).  
+   - Exiba painel “Dados ao Vivo” com componentes de gráfico (Recharts) ou tabelas dinâmicas.
+
+9. Agendamento de Publicação  
+   - Adicione campo de data/hora no editor e grave no Supabase.  
+   - Crie Edge Function agendada (cron) para publicar via API do WordPress/Ghost/Medium.  
+   - Construa dashboard de “Publicações Agendadas” com filtros por status e log de jobs.
+
+Critérios de Aceite  
+- Testes unitários (Vitest) e end-to-end (Playwright) cobrindo fluxos críticos.  
+- Layout responsivo usando Tailwind CSS e aderente ao design system atual.  
+- Monitoramento de erros via Sentry e logs estruturados.  
+- Documentação atualizada em `/docs` e comentários de código claros.  
+
+Descreva os endpoints necessários, modelo de dados Supabase (tables, functions, triggers) e wireframes de cada tela. Priorize performance, escalabilidade e experiência do usuário.
