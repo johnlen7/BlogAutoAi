@@ -1,0 +1,51 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
+    cron \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar arquivos de dependências
+COPY pyproject.toml uv.lock ./
+
+# Instalar uv e dependências Python
+RUN pip install uv
+RUN uv sync --frozen
+
+# Copiar código da aplicação
+COPY . .
+
+# Criar diretórios necessários
+RUN mkdir -p logs uploads
+
+# Criar arquivo de configuração do supervisor
+RUN echo '[supervisord]' > /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'nodaemon=true' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo '' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo '[program:webapp]' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'command=uv run gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 120 main:app' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'directory=/app' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'autostart=true' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'autorestart=true' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'stdout_logfile=/app/logs/webapp.log' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'stderr_logfile=/app/logs/webapp.log' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo '' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo '[program:automation]' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'command=uv run python automation_daemon.py' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'directory=/app' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'autostart=true' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'autorestart=true' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'stdout_logfile=/app/logs/automation.log' >> /etc/supervisor/conf.d/blogauto.conf && \
+    echo 'stderr_logfile=/app/logs/automation.log' >> /etc/supervisor/conf.d/blogauto.conf
+
+# Expor porta
+EXPOSE 5000
+
+# Comando principal - roda tanto web quanto automação
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/blogauto.conf"]
