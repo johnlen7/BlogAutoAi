@@ -1,0 +1,193 @@
+{
+  "name": "BlogAuto AI",
+  "description": "Sistema completo de automação para criação e publicação de artigos WordPress usando IA",
+  "logo": "https://raw.githubusercontent.com/easypanel-io/templates/main/templates/wordpress/logo.png",
+  "links": [
+    {
+      "name": "Website",
+      "url": "https://github.com/your-repo/blogauto-ai"
+    },
+    {
+      "name": "Documentation", 
+      "url": "https://github.com/your-repo/blogauto-ai/blob/main/README.md"
+    }
+  ],
+  "services": [
+    {
+      "type": "app",
+      "data": {
+        "projectName": "blogauto-ai",
+        "serviceName": "app",
+        "source": {
+          "type": "github",
+          "owner": "your-username",
+          "repo": "blogauto-ai",
+          "branch": "main"
+        },
+        "build": {
+          "type": "dockerfile",
+          "dockerfile": "Dockerfile"
+        },
+        "deploy": {
+          "replicas": 1,
+          "command": null,
+          "zeroDowntime": true
+        },
+        "domains": [
+          {
+            "host": "$(EASYPANEL_DOMAIN)",
+            "port": 5000,
+            "https": true
+          }
+        ],
+        "env": [
+          {
+            "key": "SECRET_KEY",
+            "value": "$(SECRET_KEY)"
+          },
+          {
+            "key": "DB_HOST",
+            "value": "$(PROJECT_NAME)_mysql"
+          },
+          {
+            "key": "DB_USER", 
+            "value": "blogauto"
+          },
+          {
+            "key": "DB_PASSWORD",
+            "value": "$(MYSQL_PASSWORD)"
+          },
+          {
+            "key": "DB_NAME",
+            "value": "blogauto"
+          },
+          {
+            "key": "OPENAI_API_KEY",
+            "value": "$(OPENAI_API_KEY)"
+          },
+          {
+            "key": "ANTHROPIC_API_KEY", 
+            "value": "$(ANTHROPIC_API_KEY)"
+          }
+        ],
+        "mounts": [
+          {
+            "type": "volume",
+            "name": "logs",
+            "mountPath": "/app/logs"
+          },
+          {
+            "type": "volume", 
+            "name": "uploads",
+            "mountPath": "/app/uploads"
+          }
+        ]
+      }
+    },
+    {
+      "type": "app",
+      "data": {
+        "projectName": "blogauto-ai",
+        "serviceName": "automation",
+        "source": {
+          "type": "github",
+          "owner": "your-username", 
+          "repo": "blogauto-ai",
+          "branch": "main"
+        },
+        "build": {
+          "type": "dockerfile",
+          "dockerfile": "Dockerfile"
+        },
+        "deploy": {
+          "replicas": 1,
+          "command": "python automation_daemon.py",
+          "zeroDowntime": false
+        },
+        "env": [
+          {
+            "key": "SECRET_KEY",
+            "value": "$(SECRET_KEY)"
+          },
+          {
+            "key": "DB_HOST",
+            "value": "$(PROJECT_NAME)_mysql"
+          },
+          {
+            "key": "DB_USER",
+            "value": "blogauto"
+          },
+          {
+            "key": "DB_PASSWORD", 
+            "value": "$(MYSQL_PASSWORD)"
+          },
+          {
+            "key": "DB_NAME",
+            "value": "blogauto"
+          },
+          {
+            "key": "OPENAI_API_KEY",
+            "value": "$(OPENAI_API_KEY)"
+          },
+          {
+            "key": "ANTHROPIC_API_KEY",
+            "value": "$(ANTHROPIC_API_KEY)"
+          }
+        ],
+        "mounts": [
+          {
+            "type": "volume",
+            "name": "logs", 
+            "mountPath": "/app/logs"
+          }
+        ]
+      }
+    },
+    {
+      "type": "mysql",
+      "data": {
+        "projectName": "blogauto-ai",
+        "serviceName": "mysql",
+        "password": "$(MYSQL_PASSWORD)",
+        "rootPassword": "$(MYSQL_ROOT_PASSWORD)",
+        "database": "blogauto",
+        "username": "blogauto"
+      }
+    }
+  ],
+  "variables": [
+    {
+      "id": "SECRET_KEY",
+      "name": "Secret Key",
+      "description": "Chave secreta para sessões Flask (será gerada automaticamente)",
+      "defaultValue": "$(generate_hex(32))",
+      "required": true
+    },
+    {
+      "id": "MYSQL_PASSWORD",
+      "name": "MySQL Password", 
+      "description": "Senha para o usuário do banco de dados",
+      "defaultValue": "$(generate_password(16))",
+      "required": true
+    },
+    {
+      "id": "MYSQL_ROOT_PASSWORD",
+      "name": "MySQL Root Password",
+      "description": "Senha para o usuário root do MySQL",
+      "defaultValue": "$(generate_password(16))",
+      "required": true
+    },
+    {
+      "id": "OPENAI_API_KEY",
+      "name": "OpenAI API Key",
+      "description": "Sua chave de API do OpenAI para geração de conteúdo com GPT",
+      "required": false
+    },
+    {
+      "id": "ANTHROPIC_API_KEY", 
+      "name": "Anthropic API Key",
+      "description": "Sua chave de API do Anthropic para geração de conteúdo com Claude",
+      "required": false
+    }
+  ]
+}

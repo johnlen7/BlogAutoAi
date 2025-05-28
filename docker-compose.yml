@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Aplicação Principal BlogAuto AI
+  app:
+    build: .
+    container_name: blogauto-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=blogauto
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_NAME=blogauto
+      - SECRET_KEY=${SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - mysql
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+    networks:
+      - blogauto-network
+
+  # Banco de Dados MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: blogauto-mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=blogauto
+      - MYSQL_USER=blogauto
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    networks:
+      - blogauto-network
+
+  # Sistema de Automação (Worker)
+  automation:
+    build: .
+    container_name: blogauto-automation
+    restart: unless-stopped
+    command: python automation_daemon.py
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=blogauto
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_NAME=blogauto
+      - SECRET_KEY=${SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - mysql
+      - app
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - blogauto-network
+
+  # Redis para Cache (Opcional)
+  redis:
+    image: redis:7-alpine
+    container_name: blogauto-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - blogauto-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  blogauto-network:
+    driver: bridge
